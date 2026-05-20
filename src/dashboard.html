@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>AI Second Brain — Dashboard</title>
+  <meta name="description" content="Your autonomous AI-powered personal knowledge base. Upload notes, search semantically, and get AI-generated daily briefs."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root{
+      --bg:#050811;--bg-card:#0d1117;--bg-hover:#111827;--bg-input:#090e1a;
+      --border:rgba(99,102,241,.14);--border-hi:rgba(99,102,241,.45);
+      --accent:#6366f1;--a2:#8b5cf6;--a3:#06b6d4;
+      --green:#10b981;--amber:#f59e0b;--rose:#f43f5e;
+      --tx:#f1f5f9;--tx2:#94a3b8;--tx3:#475569;
+      --glow:0 0 40px rgba(99,102,241,.15);--glow2:0 0 60px rgba(99,102,241,.3);
+      --r:16px;--rsm:10px;--ease:.2s cubic-bezier(.4,0,.2,1);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;overflow-x:hidden}
+    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(99,102,241,.025)1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,.025)1px,transparent 1px);background-size:44px 44px;pointer-events:none;z-index:0}
+
+    /* ── LAYOUT ── */
+    .app{display:flex;min-height:100vh;position:relative;z-index:1}
+    .sidebar{width:256px;min-height:100vh;background:linear-gradient(180deg,#0a0f1e,#050811);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:100;padding:24px 0}
+    .main{margin-left:256px;flex:1;padding:32px;max-width:calc(100vw - 256px)}
+
+    /* ── SIDEBAR ── */
+    .logo{padding:0 22px 28px;border-bottom:1px solid var(--border);margin-bottom:12px}
+    .logo-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--accent),var(--a2));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:10px;box-shadow:0 0 24px rgba(99,102,241,.4)}
+    .logo h1{font-size:15px;font-weight:700}
+    .logo p{font-size:11px;color:var(--tx3);margin-top:2px}
+    .nav{flex:1;padding:8px 10px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--rsm);cursor:pointer;transition:all var(--ease);color:var(--tx2);font-size:13px;font-weight:500;margin-bottom:3px;border:1px solid transparent}
+    .nav-item:hover{background:rgba(99,102,241,.08);color:var(--tx);border-color:var(--border)}
+    .nav-item.active{background:linear-gradient(135deg,rgba(99,102,241,.2),rgba(139,92,246,.1));color:var(--accent);border-color:var(--border-hi)}
+    .nav-icon{font-size:15px;width:20px;text-align:center}
+    .sidebar-footer{padding:14px 22px;border-top:1px solid var(--border)}
+    .sdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:6px;animation:pdot 2s infinite}
+    @keyframes pdot{0%,100%{opacity:1}50%{opacity:.35}}
+    .stext{font-size:11px;color:var(--tx3)}
+
+    /* ── TOPBAR ── */
+    .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+    .page-title{font-size:22px;font-weight:700}
+    .page-sub{font-size:12px;color:var(--tx3);margin-top:3px}
+    .topbar-actions{display:flex;gap:10px;align-items:center}
+
+    /* ── BUTTONS ── */
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:all var(--ease);border:1px solid transparent;font-family:inherit;white-space:nowrap}
+    .btn-primary{background:linear-gradient(135deg,var(--accent),var(--a2));color:#fff;box-shadow:0 0 20px rgba(99,102,241,.3)}
+    .btn-primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 0 30px rgba(99,102,241,.5)}
+    .btn-ghost{background:transparent;color:var(--tx2);border-color:var(--border)}
+    .btn-ghost:hover:not(:disabled){background:rgba(99,102,241,.08);color:var(--tx);border-color:var(--border-hi)}
+    .btn-danger{background:rgba(244,63,94,.1);color:var(--rose);border-color:rgba(244,63,94,.3)}
+    .btn-danger:hover:not(:disabled){background:rgba(244,63,94,.2)}
+    .btn-green{background:rgba(16,185,129,.15);color:var(--green);border-color:rgba(16,185,129,.3)}
+    .btn-green:hover:not(:disabled){background:rgba(16,185,129,.25)}
+    .btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important}
+
+    /* ── CARDS ── */
+    .card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:22px;transition:all var(--ease);position:relative;overflow:hidden}
+    .card:hover{border-color:var(--border-hi);box-shadow:var(--glow)}
+    .card-title{font-size:12px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+
+    /* ── STATS ── */
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:24px}
+    .stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:18px;transition:all var(--ease)}
+    .stat-card:hover{border-color:var(--border-hi);transform:translateY(-2px);box-shadow:var(--glow)}
+    .stat-icon{font-size:22px;margin-bottom:10px}
+    .stat-value{font-size:30px;font-weight:800;background:linear-gradient(135deg,var(--tx),var(--tx2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+    .stat-label{font-size:11px;color:var(--tx3);margin-top:5px;font-weight:500}
+
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px}
+    .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:20px}
+
+    /* ── PAGES ── */
+    .page{display:none;animation:fadeIn .25s ease}
+    .page.active{display:block}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+    /* ── UPLOAD ZONE ── */
+    .upload-zone{border:2px dashed var(--border-hi);border-radius:var(--r);padding:40px;text-align:center;cursor:pointer;transition:all var(--ease);background:rgba(99,102,241,.03);position:relative}
+    .upload-zone:hover,.upload-zone.drag-over{background:rgba(99,102,241,.08);border-color:var(--accent);box-shadow:var(--glow)}
+    .upload-icon{font-size:48px;margin-bottom:14px;display:block}
+    .upload-title{font-size:17px;font-weight:700;margin-bottom:6px}
+    .upload-sub{font-size:13px;color:var(--tx2);margin-bottom:20px}
+    .upload-types{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:20px}
+    .type-badge{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+    .tb-md{background:rgba(99,102,241,.15);color:var(--accent)}
+    .tb-pdf{background:rgba(244,63,94,.15);color:var(--rose)}
+    .tb-txt{background:rgba(16,185,129,.15);color:var(--green)}
+    .tb-docx{background:rgba(245,158,11,.15);color:var(--amber)}
+    #file-input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+
+    .url-row{display:flex;gap:10px;margin-top:14px}
+    .url-input{flex:1;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--rsm);padding:10px 14px;color:var(--tx);font-size:13px;font-family:inherit;outline:none;transition:border-color var(--ease)}
+    .url-input:focus{border-color:var(--border-hi)}
+    .url-input::placeholder{color:var(--tx3)}
+
+    /* ── UPLOAD PROGRESS ── */
+    .upload-list{margin-top:18px;display:flex;flex-direction:column;gap:8px}
+    .upload-item{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--rsm);padding:12px 16px;display:flex;align-items:center;gap:12px;animation:fadeIn .2s ease}
+    .upload-item-icon{font-size:20px;min-width:24px}
+    .upload-item-info{flex:1;min-width:0}
+    .upload-item-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .upload-item-meta{font-size:11px;color:var(--tx3);margin-top:2px}
+    .upload-item-status{font-size:12px;font-weight:600;padding:3px 8px;border-radius:6px;white-space:nowrap}
+    .status-uploading{background:rgba(99,102,241,.15);color:var(--accent)}
+    .status-done{background:rgba(16,185,129,.15);color:var(--green)}
+    .status-error{background:rgba(244,63,94,.15);color:var(--rose)}
+    .upload-bar{height:3px;background:var(--border);border-radius:2px;margin-top:6px;overflow:hidden}
+    .upload-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--a2));border-radius:2px;transition:width .4s ease;width:0}
+
+    /* ── NOTES GRID ── */
+    .notes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+    .note-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:18px;cursor:pointer;transition:all var(--ease);position:relative;overflow:hidden}
+    .note-card:hover{border-color:var(--border-hi);transform:translateY(-2px);box-shadow:var(--glow)}
+    .note-type-badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:3px 8px;border-radius:6px;display:inline-flex;margin-bottom:8px}
+    .nt-journal{background:rgba(245,158,11,.15);color:var(--amber)}
+    .nt-note,.nt-concept{background:rgba(99,102,241,.15);color:var(--accent)}
+    .nt-brief{background:rgba(16,185,129,.15);color:var(--green)}
+    .nt-other{background:rgba(148,163,184,.12);color:var(--tx3)}
+    .note-title{font-size:14px;font-weight:700;margin-bottom:6px;line-height:1.4}
+    .note-preview{font-size:12px;color:var(--tx3);line-height:1.6;margin-bottom:10px}
+    .note-meta{display:flex;gap:10px;flex-wrap:wrap}
+    .note-tag{font-size:11px;color:var(--tx3);display:flex;align-items:center;gap:3px}
+    .ai-badge{position:absolute;top:12px;right:12px;font-size:13px;opacity:.5;transition:opacity var(--ease)}
+    .note-card:hover .ai-badge{opacity:1}
+
+    /* ── MODAL ── */
+    .modal-overlay{position:fixed;inset:0;background:rgba(5,8,17,.88);backdrop-filter:blur(8px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity .22s}
+    .modal-overlay.open{opacity:1;pointer-events:all}
+    .modal{background:var(--bg-card);border:1px solid var(--border-hi);border-radius:var(--r);width:100%;max-width:720px;max-height:82vh;overflow-y:auto;box-shadow:var(--glow2);transform:translateY(18px);transition:transform .22s;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+    .modal-overlay.open .modal{transform:translateY(0)}
+    .modal-header{padding:22px 22px 16px;display:flex;justify-content:space-between;align-items:flex-start;position:sticky;top:0;background:var(--bg-card);border-bottom:1px solid var(--border);z-index:10}
+    .modal-close{width:30px;height:30px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--tx2);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all var(--ease);font-family:inherit}
+    .modal-close:hover{background:rgba(244,63,94,.1);border-color:var(--rose);color:var(--rose)}
+    .modal-body{padding:22px}
+    .note-content{font-size:13px;line-height:1.9;color:var(--tx2);white-space:pre-wrap;font-family:'JetBrains Mono',monospace}
+
+    /* ── CHAT ── */
+    .chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 190px);min-height:400px}
+    .chat-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+    .bubble{max-width:78%;padding:13px 17px;border-radius:16px;font-size:13px;line-height:1.7;animation:bubIn .18s ease}
+    @keyframes bubIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+    .bubble.user{align-self:flex-end;background:linear-gradient(135deg,var(--accent),var(--a2));color:#fff;border-bottom-right-radius:4px}
+    .bubble.bot{align-self:flex-start;background:var(--bg-hover);border:1px solid var(--border);color:var(--tx);border-bottom-left-radius:4px}
+    .bubble.thinking{align-self:flex-start;background:rgba(99,102,241,.07);border:1px solid var(--border);color:var(--tx2);font-style:italic}
+    .sources-row{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap}
+    .src-chip{font-size:11px;padding:2px 7px;background:rgba(99,102,241,.1);border:1px solid var(--border);border-radius:6px;color:var(--accent);font-weight:500}
+    .chat-bar{display:flex;gap:10px;padding:14px;border-top:1px solid var(--border);background:var(--bg-card);border-radius:0 0 var(--r) var(--r)}
+    .chat-input{flex:1;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--tx);font-size:13px;font-family:inherit;resize:none;height:48px;transition:border-color var(--ease);outline:none}
+    .chat-input:focus{border-color:var(--border-hi)}
+    .chat-input::placeholder{color:var(--tx3)}
+
+    /* ── SEARCH ── */
+    .search-bar{display:flex;gap:10px;margin-bottom:22px}
+    .search-input{flex:1;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--rsm);padding:13px 16px;color:var(--tx);font-size:14px;font-family:inherit;outline:none;transition:border-color var(--ease)}
+    .search-input:focus{border-color:var(--border-hi)}
+    .search-input::placeholder{color:var(--tx3)}
+    .result-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:10px;transition:all var(--ease);cursor:pointer;animation:fadeIn .2s ease}
+    .result-card:hover{border-color:var(--border-hi);box-shadow:var(--glow)}
+    .result-title{font-size:14px;font-weight:700;margin-bottom:5px}
+    .result-content{font-size:12px;color:var(--tx3);line-height:1.6;margin-bottom:8px}
+    .result-score{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:600}
+
+    /* ── INDEX ── */
+    .cat-card{margin-bottom:14px}
+    .cat-header{font-size:16px;font-weight:700;padding:10px 0;border-bottom:1px solid var(--border);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+    .cat-count{font-size:11px;padding:2px 8px;border-radius:6px;background:rgba(99,102,241,.15);color:var(--accent);font-weight:500}
+    .pills{display:flex;gap:8px;flex-wrap:wrap}
+    .pill{padding:7px 13px;background:rgba(99,102,241,.07);border:1px solid var(--border);border-radius:999px;font-size:12px;color:var(--tx2);cursor:pointer;transition:all var(--ease);display:flex;align-items:center;gap:5px}
+    .pill:hover{background:rgba(99,102,241,.18);border-color:var(--border-hi);color:var(--tx)}
+
+    /* ── BRIEF ── */
+    .brief-hero{background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(139,92,246,.05));border:1px solid var(--border-hi);border-radius:var(--r);padding:26px;margin-bottom:22px;position:relative;overflow:hidden}
+    .brief-hero::after{content:'📅';position:absolute;right:26px;top:50%;transform:translateY(-50%);font-size:60px;opacity:.08}
+    .brief-date-lbl{font-size:11px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.1em}
+    .brief-title{font-size:26px;font-weight:800;margin-top:4px}
+    .brief-sub{font-size:12px;color:var(--tx3);margin-top:5px}
+    .task-row{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid rgba(99,102,241,.07)}
+    .task-row:last-child{border-bottom:none}
+    .chk{width:17px;height:17px;min-width:17px;border:2px solid var(--border-hi);border-radius:5px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all var(--ease);margin-top:1px}
+    .chk.done{background:var(--green);border-color:var(--green)}
+    .chk.done::after{content:'✓';font-size:10px;color:#fff;font-weight:700}
+    .task-txt{font-size:13px;line-height:1.5}
+    .task-txt.done{color:var(--tx3);text-decoration:line-through}
+    .conn-item{padding:10px 12px;background:rgba(99,102,241,.05);border-radius:var(--rsm);border:1px solid var(--border);margin-bottom:7px;font-size:13px;color:var(--tx2);transition:all var(--ease)}
+    .conn-item:hover{border-color:var(--border-hi);color:var(--tx)}
+    .wiki{color:var(--accent);font-weight:600}
+    .res-item{padding:12px;background:rgba(6,182,212,.05);border-radius:var(--rsm);border:1px solid rgba(6,182,212,.14);margin-bottom:7px;font-size:12px;line-height:1.7}
+    .res-term{font-weight:700;color:var(--a3);font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:3px}
+
+    /* ── MISC ── */
+    .empty{text-align:center;padding:50px 20px;color:var(--tx3)}
+    .empty-icon{font-size:42px;margin-bottom:14px;opacity:.45}
+    .empty-title{font-size:14px;font-weight:600;color:var(--tx2);margin-bottom:5px}
+    .skel{background:linear-gradient(90deg,var(--bg-card) 25%,rgba(99,102,241,.04) 50%,var(--bg-card) 75%);background-size:200% 100%;animation:skel 1.4s infinite;border-radius:8px}
+    @keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
+    .spin{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .tag{display:inline-flex;align-items:center;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:600;background:rgba(99,102,241,.1);color:var(--accent);margin:2px}
+
+    /* ── TOASTS ── */
+    .toasts{position:fixed;bottom:22px;right:22px;z-index:9999;display:flex;flex-direction:column;gap:7px}
+    .toast{background:var(--bg-card);border:1px solid var(--border-hi);border-radius:var(--rsm);padding:11px 15px;font-size:12px;display:flex;align-items:center;gap:9px;box-shadow:var(--glow2);animation:toastIn .25s ease;min-width:240px}
+    @keyframes toastIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+    .toast.ok{border-color:rgba(16,185,129,.4)}
+    .toast.err{border-color:rgba(244,63,94,.4)}
+    ::-webkit-scrollbar{width:5px;height:5px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+    ::-webkit-scrollbar-thumb:hover{background:var(--border-hi)}
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ══ SIDEBAR ══ -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">🧠</div>
+      <h1>Second Brain</h1>
+      <p>Autonomous AI Knowledge Base</p>
+    </div>
+    <nav class="nav" id="nav">
+      <div class="nav-item active" data-p="overview"  onclick="go('overview')"><span class="nav-icon">⚡</span>Overview</div>
+      <div class="nav-item" data-p="upload"   onclick="go('upload')"  ><span class="nav-icon">📤</span>Upload Files</div>
+      <div class="nav-item" data-p="brief"    onclick="go('brief')"   ><span class="nav-icon">📅</span>Daily Brief</div>
+      <div class="nav-item" data-p="notes"    onclick="go('notes')"   ><span class="nav-icon">📝</span>Notes Vault</div>
+      <div class="nav-item" data-p="index"    onclick="go('index')"   ><span class="nav-icon">🗂️</span>Index</div>
+      <div class="nav-item" data-p="chat"     onclick="go('chat')"    ><span class="nav-icon">💬</span>Ask Brain</div>
+      <div class="nav-item" data-p="search"   onclick="go('search')"  ><span class="nav-icon">🔍</span>Search</div>
+    </nav>
+    <div class="sidebar-footer">
+      <span class="sdot"></span>
+      <span class="stext" id="s-status">Connecting…</span>
+    </div>
+  </aside>
+
+  <!-- ══ MAIN ══ -->
+  <main class="main">
+
+    <!-- OVERVIEW -->
+    <div class="page active" id="page-overview">
+      <div class="topbar">
+        <div><div class="page-title">⚡ Overview</div><div class="page-sub" id="ov-sub">Loading…</div></div>
+        <div class="topbar-actions">
+          <button class="btn btn-ghost" onclick="refreshAll()">↻ Refresh</button>
+          <button class="btn btn-primary" id="nightly-btn" onclick="triggerNightly()">🚀 Run Nightly Sync</button>
+        </div>
+      </div>
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card skel" style="height:100px"></div>
+        <div class="stat-card skel" style="height:100px"></div>
+        <div class="stat-card skel" style="height:100px"></div>
+        <div class="stat-card skel" style="height:100px"></div>
+        <div class="stat-card skel" style="height:100px"></div>
+        <div class="stat-card skel" style="height:100px"></div>
+      </div>
+      <div class="grid2">
+        <div class="card"><div class="card-title">⚡ Today's Action Items</div><div id="ov-tasks"><div class="spin"></div></div></div>
+        <div class="card"><div class="card-title">🔍 Latest Research</div><div id="ov-research"><div class="spin"></div></div></div>
+      </div>
+      <div class="grid2">
+        <div class="card"><div class="card-title">🔗 Concept Connections</div><div id="ov-conn"><div class="spin"></div></div></div>
+        <div class="card"><div class="card-title">🗂️ Knowledge Categories</div><div id="ov-cats"><div class="spin"></div></div></div>
+      </div>
+    </div>
+
+    <!-- UPLOAD -->
+    <div class="page" id="page-upload">
+      <div class="topbar">
+        <div><div class="page-title">📤 Upload Files</div><div class="page-sub">Drop files or paste a URL — auto-routed and indexed into your Brain</div></div>
+        <button class="btn btn-ghost" onclick="clearUploads()">🗑 Clear List</button>
+      </div>
+
+      <div class="grid2" style="margin-bottom:20px">
+        <!-- Drop Zone -->
+        <div class="card" style="padding:0">
+          <div class="upload-zone" id="drop-zone"
+               ondrop="handleDrop(event)" ondragover="event.preventDefault();this.classList.add('drag-over')"
+               ondragleave="this.classList.remove('drag-over')" onclick="document.getElementById('file-input').click()">
+            <input type="file" id="file-input" multiple
+                   accept=".md,.txt,.pdf,.docx,.csv,.json,.py,.js,.html"
+                   onchange="handleFiles(this.files)" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%"/>
+            <span class="upload-icon">📂</span>
+            <div class="upload-title">Drop files here or click to browse</div>
+            <div class="upload-sub">Files are automatically sorted into the right folder</div>
+            <div class="upload-types">
+              <span class="type-badge tb-md">.md → Notes Vault</span>
+              <span class="type-badge tb-pdf">.pdf → Documents</span>
+              <span class="type-badge tb-txt">.txt → Documents</span>
+              <span class="type-badge tb-docx">.docx → Documents</span>
+            </div>
+            <button class="btn btn-primary" onclick="event.stopPropagation();document.getElementById('file-input').click()" style="position:relative;z-index:2">Browse Files</button>
+          </div>
+        </div>
+
+        <!-- URL / Text Ingest -->
+        <div class="card">
+          <div class="card-title">🌐 Ingest from URL or Text</div>
+
+          <div style="margin-bottom:18px">
+            <div style="font-size:12px;color:var(--tx2);font-weight:600;margin-bottom:8px">🔗 Web Page URL</div>
+            <div class="url-row">
+              <input type="url" id="url-input" class="url-input" placeholder="https://example.com/article"/>
+              <button class="btn btn-primary" id="url-btn" onclick="ingestURL()">Ingest</button>
+            </div>
+          </div>
+
+          <div style="margin-bottom:18px">
+            <div style="font-size:12px;color:var(--tx2);font-weight:600;margin-bottom:8px">▶️ YouTube Video</div>
+            <div class="url-row">
+              <input type="url" id="yt-input" class="url-input" placeholder="https://youtube.com/watch?v=..."/>
+              <button class="btn btn-primary" id="yt-btn" onclick="ingestYT()">Ingest</button>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:12px;color:var(--tx2);font-weight:600;margin-bottom:8px">📝 Paste Text / Note</div>
+            <input type="text" id="note-title" class="url-input" placeholder="Note title (optional)" style="margin-bottom:8px;width:100%"/>
+            <textarea id="text-input" class="url-input" style="height:90px;resize:vertical;width:100%" placeholder="Paste any text, meeting notes, ideas…"></textarea>
+            <div class="url-row" style="margin-top:8px">
+              <button class="btn btn-green" style="width:100%" id="text-btn" onclick="ingestText()">💾 Save to Brain</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload list -->
+      <div class="card">
+        <div class="card-title" style="justify-content:space-between">
+          📋 Upload Queue &amp; Results
+          <span id="upload-count" style="font-size:11px;color:var(--tx3);font-weight:400"></span>
+        </div>
+        <div id="upload-list">
+          <div class="empty"><div class="empty-icon">📭</div><div class="empty-title">No uploads yet</div><p>Drop files above or paste a URL</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DAILY BRIEF -->
+    <div class="page" id="page-brief">
+      <div class="topbar">
+        <div><div class="page-title">📅 Daily Brief</div><div class="page-sub">Auto-generated by your nightly AI administrator</div></div>
+        <div class="topbar-actions">
+          <button class="btn btn-ghost" onclick="loadBrief()">↻ Reload</button>
+          <button class="btn btn-primary" onclick="triggerNightly()">🚀 Run Nightly Sync</button>
+        </div>
+      </div>
+      <div id="brief-content"><div class="empty"><div class="spin"></div></div></div>
+    </div>
+
+    <!-- NOTES VAULT -->
+    <div class="page" id="page-notes">
+      <div class="topbar">
+        <div><div class="page-title">📝 Notes Vault</div><div class="page-sub" id="notes-count">Loading…</div></div>
+        <div class="topbar-actions">
+          <button class="btn btn-ghost" onclick="loadNotes()">↻ Reload</button>
+          <button class="btn btn-primary" onclick="go('upload')">+ Upload Note</button>
+        </div>
+      </div>
+      <div class="notes-grid" id="notes-grid">
+        <div class="note-card skel" style="height:150px"></div>
+        <div class="note-card skel" style="height:150px"></div>
+        <div class="note-card skel" style="height:150px"></div>
+      </div>
+    </div>
+
+    <!-- INDEX -->
+    <div class="page" id="page-index">
+      <div class="topbar">
+        <div><div class="page-title">🗂️ Knowledge Index</div><div class="page-sub">Auto-maintained categorized index of all notes</div></div>
+        <button class="btn btn-ghost" onclick="loadIndex()">↻ Reload</button>
+      </div>
+      <div id="index-content"><div class="empty"><div class="spin"></div></div></div>
+    </div>
+
+    <!-- CHAT -->
+    <div class="page" id="page-chat">
+      <div class="topbar">
+        <div><div class="page-title">💬 Ask Your Brain</div><div class="page-sub">RAG-powered Q&amp;A across your entire knowledge base</div></div>
+        <button class="btn btn-danger" onclick="clearChat()">🗑 Clear</button>
+      </div>
+      <div class="card" style="padding:0;display:flex;flex-direction:column;height:calc(100vh - 200px)">
+        <div class="chat-msgs" id="chat-msgs">
+          <div class="bubble bot">👋 Hi! Ask me anything — I'll search your entire vault to find the best answer. The more notes you upload, the smarter I get!</div>
+        </div>
+        <div class="chat-bar">
+          <textarea id="chat-input" class="chat-input" placeholder="Ask anything… (Enter to send, Shift+Enter for new line)" onkeydown="chatKey(event)"></textarea>
+          <button class="btn btn-primary" id="chat-btn" onclick="sendChat()">Send →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="page" id="page-search">
+      <div class="topbar">
+        <div><div class="page-title">🔍 Semantic Search</div><div class="page-sub">Search by meaning, not just keywords</div></div>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="search-input" class="search-input" placeholder="e.g. 'RAG architecture', 'meeting action items', 'ChromaDB setup'" onkeydown="if(event.key==='Enter')doSearch()"/>
+        <button class="btn btn-primary" onclick="doSearch()">Search</button>
+      </div>
+      <div id="search-results"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- NOTE MODAL -->
+<div class="modal-overlay" id="note-modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div id="modal-title" style="font-size:17px;font-weight:700"></div>
+        <div id="modal-meta" style="font-size:11px;color:var(--tx3);margin-top:3px"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body"><pre id="modal-body" class="note-content"></pre></div>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div class="toasts" id="toasts"></div>
+
+<script>
+const API = '';
+let uploads = [];
+
+// ── NAV ────────────────────────────────────────────────────────
+function go(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelector(`[data-p="${page}"]`).classList.add('active');
+  if (page === 'overview') loadOverview();
+  if (page === 'brief')    loadBrief();
+  if (page === 'notes')    loadNotes();
+  if (page === 'index')    loadIndex();
+}
+
+// ── API ─────────────────────────────────────────────────────────
+async function api(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(API + path, opts);
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+// ── TOAST ────────────────────────────────────────────────────────
+function toast(msg, type = 'ok', ms = 3500) {
+  const tc = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${type === 'ok' ? '✅' : '❌'}</span> ${msg}`;
+  tc.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateX(16px)'; el.style.transition = 'all .3s'; setTimeout(() => el.remove(), 300); }, ms);
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function wikiHL(s) { return s.replace(/\[\[([^\]]+)\]\]/g, '<span class="wiki">[[<b>$1</b>]]</span>'); }
+
+// ── OVERVIEW ─────────────────────────────────────────────────────
+async function loadOverview() {
+  try {
+    const d = await api('GET', '/api/overview');
+    document.getElementById('ov-sub').textContent = `Last brief: ${d.last_brief_date} · ${d.total_chunks} chunks indexed`;
+    document.getElementById('s-status').textContent = 'API Connected';
+    const stats = [
+      {icon:'📝',v:d.total_notes,l:'Notes'},
+      {icon:'🔢',v:d.total_chunks,l:'Semantic Chunks'},
+      {icon:'🔗',v:d.total_links,l:'WikiLinks'},
+      {icon:'⚡',v:d.total_tasks,l:'Action Items'},
+      {icon:'🤖',v:d.notes_with_ai,l:'AI-Enriched'},
+      {icon:'🗂️',v:d.total_categories,l:'Categories'},
+    ];
+    document.getElementById('stats-grid').innerHTML = stats.map(s => `
+      <div class="stat-card">
+        <div class="stat-icon">${s.icon}</div>
+        <div class="stat-value">${s.v}</div>
+        <div class="stat-label">${s.l}</div>
+      </div>`).join('');
+    loadOverviewSections();
+  } catch(e) {
+    document.getElementById('s-status').textContent = 'API Offline';
+    document.getElementById('stats-grid').innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">⚠️</div><div class="empty-title">API not reachable</div><p>Make sure the server is running on port 8000</p></div>`;
+  }
+}
+
+async function loadOverviewSections() {
+  try {
+    const b = await api('GET', '/api/brief');
+    // Tasks
+    const tasks = b.tasks || [];
+    document.getElementById('ov-tasks').innerHTML = tasks.length
+      ? tasks.slice(0,6).map(t => {
+          const txt = typeof t === 'string' ? t : t.text;
+          const done = typeof t === 'object' && t.done;
+          return `<div class="task-row"><div class="chk ${done?'done':''}" onclick="this.classList.toggle('done');this.nextElementSibling.classList.toggle('done')"></div><div class="task-txt ${done?'done':''}">${esc(txt)}</div></div>`;
+        }).join('')
+      : '<div style="color:var(--tx3);font-size:13px;padding:8px 0">No pending tasks — run nightly sync to extract them</div>';
+
+    document.getElementById('ov-conn').innerHTML = (b.connections||[]).length
+      ? b.connections.slice(0,5).map(c => `<div class="conn-item">${wikiHL(esc(c))}</div>`).join('')
+      : '<div style="color:var(--tx3);font-size:13px;padding:8px 0">No connections yet — upload more notes!</div>';
+
+    const res = b.research || [];
+    document.getElementById('ov-research').innerHTML = res.length
+      ? res.slice(0,3).map(r => { const [term,...rest]=r.split(/:\s+/); return `<div class="res-item"><div class="res-term">${esc(term)}</div><div style="color:var(--tx2)">${esc(rest.join(': '))}</div></div>`; }).join('')
+      : '<div style="color:var(--tx3);font-size:13px;padding:8px 0">No research items yet — use [Research: topic] in notes</div>';
+  } catch(e) {}
+
+  try {
+    const idx = await api('GET', '/api/index');
+    const cats = Object.entries(idx.categories || {}).filter(([,v]) => v.length);
+    document.getElementById('ov-cats').innerHTML = cats.length
+      ? cats.map(([cat,notes]) => `
+          <div style="margin-bottom:12px">
+            <div style="font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">${esc(cat)} <span style="color:var(--accent)">(${notes.length})</span></div>
+            <div class="pills">${notes.map(n=>`<div class="pill" onclick="openNote('${esc(n)}')">📄 ${esc(n)}</div>`).join('')}</div>
+          </div>`).join('')
+      : '<div style="color:var(--tx3);font-size:13px">Run nightly sync to build the index</div>';
+  } catch(e) {}
+}
+
+// ── UPLOAD ───────────────────────────────────────────────────────
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('drag-over');
+  handleFiles(e.dataTransfer.files);
+}
+
+function handleFiles(fileList) {
+  Array.from(fileList).forEach(uploadFile);
+}
+
+function fileIcon(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  return {md:'📝',pdf:'📕',txt:'📄',docx:'📘',csv:'📊',json:'🔧',py:'🐍',js:'⚙️',html:'🌐'}[ext] || '📎';
+}
+
+function fileCategory(name) {
+  const ext = ('.' + name.split('.').pop().toLowerCase());
+  if (['.md'].includes(ext)) return 'Notes Vault';
+  if (['.pdf','.docx','.txt'].includes(ext)) return 'Documents';
+  return 'Raw Files';
+}
+
+function addUploadItem(name, id) {
+  const list = document.getElementById('upload-list');
+  if (list.querySelector('.empty')) list.innerHTML = '';
+  const el = document.createElement('div');
+  el.className = 'upload-item';
+  el.id = 'ul-' + id;
+  el.innerHTML = `
+    <span class="upload-item-icon">${fileIcon(name)}</span>
+    <div class="upload-item-info">
+      <div class="upload-item-name">${esc(name)}</div>
+      <div class="upload-item-meta" id="ul-meta-${id}">${fileCategory(name)} · Uploading…</div>
+      <div class="upload-bar"><div class="upload-bar-fill" id="ul-bar-${id}" style="width:30%"></div></div>
+    </div>
+    <span class="upload-item-status status-uploading" id="ul-st-${id}">Uploading</span>`;
+  list.insertBefore(el, list.firstChild);
+  updateUploadCount();
+  // Animate bar
+  setTimeout(() => { const b = document.getElementById('ul-bar-' + id); if(b) b.style.width = '70%'; }, 300);
+}
+
+function setUploadDone(id, meta) {
+  const st = document.getElementById('ul-st-' + id);
+  const bar = document.getElementById('ul-bar-' + id);
+  const m = document.getElementById('ul-meta-' + id);
+  if (st)  { st.textContent = 'Indexed ✓'; st.className = 'upload-item-status status-done'; }
+  if (bar) { bar.style.width = '100%'; bar.style.background = 'var(--green)'; }
+  if (m && meta) m.textContent = meta;
+  updateUploadCount();
+}
+
+function setUploadError(id, err) {
+  const st = document.getElementById('ul-st-' + id);
+  const bar = document.getElementById('ul-bar-' + id);
+  if (st)  { st.textContent = 'Error'; st.className = 'upload-item-status status-error'; }
+  if (bar) { bar.style.width = '100%'; bar.style.background = 'var(--rose)'; }
+}
+
+function updateUploadCount() {
+  const items = document.querySelectorAll('.upload-item').length;
+  document.getElementById('upload-count').textContent = items ? `${items} item${items>1?'s':''}` : '';
+}
+
+async function uploadFile(file) {
+  const id = Date.now() + Math.random().toString(36).slice(2,6);
+  addUploadItem(file.name, id);
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const r = await fetch('/api/upload', { method: 'POST', body: fd });
+    if (!r.ok) throw new Error(await r.text());
+    const data = await r.json();
+    const sz = data.size_bytes < 1024 ? data.size_bytes + ' B' : Math.round(data.size_bytes/1024) + ' KB';
+    setUploadDone(id, `${data.category} → ${data.saved_to} · ${sz} · being indexed…`);
+    toast(`${file.name} uploaded → ${data.category}`, 'ok');
+  } catch(e) {
+    setUploadError(id, e.message);
+    toast(`Upload failed: ${file.name}`, 'err');
+  }
+}
+
+async function ingestURL() {
+  const url = document.getElementById('url-input').value.trim();
+  if (!url) { toast('Please enter a URL', 'err'); return; }
+  const btn = document.getElementById('url-btn');
+  btn.disabled = true; btn.textContent = '…';
+  const id = 'url-' + Date.now();
+  addUploadItem(url.replace('https://',''), id);
+  try {
+    const d = await api('POST', '/ingest', { url });
+    setUploadDone(id, `Web page · ${d.chunks} chunk(s) indexed`);
+    document.getElementById('url-input').value = '';
+    toast('URL ingested successfully!', 'ok');
+  } catch(e) {
+    setUploadError(id, e.message);
+    toast('URL ingest failed: ' + e.message, 'err');
+  }
+  btn.disabled = false; btn.textContent = 'Ingest';
+}
+
+async function ingestYT() {
+  const url = document.getElementById('yt-input').value.trim();
+  if (!url) { toast('Please enter a YouTube URL', 'err'); return; }
+  const btn = document.getElementById('yt-btn');
+  btn.disabled = true; btn.textContent = '…';
+  const id = 'yt-' + Date.now();
+  addUploadItem('YouTube: ' + url.split('v=')[1], id);
+  try {
+    const d = await api('POST', '/ingest', { youtube: url });
+    setUploadDone(id, `YouTube transcript · ${d.chunks} chunk(s)`);
+    document.getElementById('yt-input').value = '';
+    toast('YouTube video ingested!', 'ok');
+  } catch(e) {
+    setUploadError(id, e.message);
+    toast('YouTube ingest failed: ' + e.message, 'err');
+  }
+  btn.disabled = false; btn.textContent = 'Ingest';
+}
+
+async function ingestText() {
+  const text = document.getElementById('text-input').value.trim();
+  const title = document.getElementById('note-title').value.trim() || 'Pasted Note';
+  if (!text) { toast('Please paste some text first', 'err'); return; }
+  const btn = document.getElementById('text-btn');
+  btn.disabled = true; btn.textContent = '⏳ Saving…';
+  const id = 'txt-' + Date.now();
+  addUploadItem(title, id);
+  try {
+    const d = await api('POST', '/ingest', { text, title });
+    setUploadDone(id, `Text note · ${d.chunks} chunk(s) indexed`);
+    document.getElementById('text-input').value = '';
+    document.getElementById('note-title').value = '';
+    toast('Note saved to Brain!', 'ok');
+  } catch(e) {
+    setUploadError(id, e.message);
+    toast('Save failed: ' + e.message, 'err');
+  }
+  btn.disabled = false; btn.textContent = '💾 Save to Brain';
+}
+
+function clearUploads() {
+  document.getElementById('upload-list').innerHTML = `<div class="empty"><div class="empty-icon">📭</div><div class="empty-title">No uploads yet</div><p>Drop files above or paste a URL</p></div>`;
+  updateUploadCount();
+}
+
+// ── BRIEF ─────────────────────────────────────────────────────────
+async function loadBrief() {
+  const el = document.getElementById('brief-content');
+  try {
+    const b = await api('GET', '/api/brief');
+    if (!b.found) {
+      el.innerHTML = `<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">No Brief Yet</div><p>Click <strong>Run Nightly Sync</strong> to generate today's brief</p><br><button class="btn btn-primary" onclick="triggerNightly()">🚀 Run Nightly Sync</button></div>`;
+      return;
+    }
+    const tasks = b.tasks || [];
+    el.innerHTML = `
+      <div class="brief-hero">
+        <div class="brief-date-lbl">Daily Brief</div>
+        <div class="brief-title">${esc(b.date)}</div>
+        <div class="brief-sub">Auto-generated by your nightly AI administrator</div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">📥 Ingested Today</div>
+          ${(b.ingestion||[]).length
+            ? b.ingestion.map(i=>`<div style="padding:8px 0;border-bottom:1px solid rgba(99,102,241,.07);font-size:13px">${wikiHL(esc(i))}</div>`).join('')
+            : '<div style="color:var(--tx3);font-size:13px">Nothing new ingested</div>'}
+        </div>
+        <div class="card">
+          <div class="card-title">⚡ Action Items <span style="font-weight:400;font-size:10px;margin-left:4px;color:var(--tx3)">${tasks.length} items</span></div>
+          ${tasks.length
+            ? tasks.map(t=>{const txt=typeof t==='string'?t:t.text;const done=typeof t==='object'&&t.done;return `<div class="task-row"><div class="chk ${done?'done':''}" onclick="this.classList.toggle('done');this.nextElementSibling.classList.toggle('done')"></div><div class="task-txt ${done?'done':''}">${esc(txt)}</div></div>`;}).join('')
+            : '<div style="color:var(--tx3);font-size:13px">No action items found</div>'}
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">🔗 Concept Connections</div>
+          ${(b.connections||[]).length
+            ? b.connections.map(c=>`<div class="conn-item">${wikiHL(esc(c))}</div>`).join('')
+            : '<div style="color:var(--tx3);font-size:13px">No connections found today</div>'}
+        </div>
+        <div class="card">
+          <div class="card-title">🔍 Research &amp; Fact-Checks</div>
+          ${(b.research||[]).length
+            ? b.research.map(r=>{const[term,...rest]=r.split(/:\s+/);return `<div class="res-item"><div class="res-term">${esc(term)}</div><div style="color:var(--tx2);margin-top:4px">${esc(rest.join(': ').trim())}</div></div>`;}).join('')
+            : '<div style="color:var(--tx3);font-size:13px">No research items resolved</div>'}
+        </div>
+      </div>`;
+  } catch(e) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">${esc(e.message)}</div></div>`;
+  }
+}
+
+// ── NOTES ─────────────────────────────────────────────────────────
+async function loadNotes() {
+  try {
+    const {notes} = await api('GET', '/api/notes');
+    document.getElementById('notes-count').textContent = `${notes.length} notes in vault`;
+    const typeMap = {journal:'nt-journal',note:'nt-note',concept:'nt-concept',brief:'nt-brief'};
+    document.getElementById('notes-grid').innerHTML = notes.length
+      ? notes.map(n => `
+        <div class="note-card" onclick="openNote('${esc(n.name)}')">
+          <span class="ai-badge">${n.has_ai_insights?'🤖':''}</span>
+          <div class="note-type-badge ${typeMap[n.type]||'nt-other'}">${n.type}</div>
+          <div class="note-title">${esc(n.name.replace(/[-_]/g,' '))}</div>
+          <div class="note-preview">${esc(n.preview)}…</div>
+          <div class="note-meta">
+            <span class="note-tag">📝 ${n.word_count} words</span>
+            <span class="note-tag">🔗 ${n.links.length} links</span>
+            ${n.tags.slice(0,2).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}
+          </div>
+        </div>`).join('')
+      : `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📭</div><div class="empty-title">No notes yet</div><p><button class="btn btn-primary" onclick="go('upload')">+ Upload your first note</button></p></div>`;
+  } catch(e) {
+    document.getElementById('notes-grid').innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">⚠️</div><div class="empty-title">${esc(e.message)}</div></div>`;
+  }
+}
+
+async function openNote(name) {
+  try {
+    const d = await api('GET', `/api/note/${encodeURIComponent(name)}`);
+    document.getElementById('modal-title').textContent = name.replace(/[-_]/g,' ');
+    document.getElementById('modal-meta').textContent = `${d.content.length} chars · ${d.content.split('\n').length} lines`;
+    document.getElementById('modal-body').textContent = d.content;
+    document.getElementById('note-modal').classList.add('open');
+  } catch(e) { toast('Note not found: ' + e.message, 'err'); }
+}
+
+function closeModal() { document.getElementById('note-modal').classList.remove('open'); }
+
+// ── INDEX ─────────────────────────────────────────────────────────
+const CAT_ICONS = {Work:'💼','Machine Learning':'🤖',Coding:'💻',Productivity:'⚡',Research:'🔬',Personal:'🙋',General:'📁'};
+async function loadIndex() {
+  const el = document.getElementById('index-content');
+  try {
+    const {categories} = await api('GET', '/api/index');
+    const filled = Object.entries(categories).filter(([,v])=>v.length);
+    el.innerHTML = filled.length
+      ? filled.map(([cat,notes]) => `
+          <div class="card cat-card">
+            <div class="cat-header">${CAT_ICONS[cat]||'📁'} ${esc(cat)} <span class="cat-count">${notes.length}</span></div>
+            <div class="pills">${notes.map(n=>`<div class="pill" onclick="openNote('${esc(n)}')">📄 ${esc(n)}</div>`).join('')}</div>
+          </div>`).join('')
+      : `<div class="empty"><div class="empty-icon">🗂️</div><div class="empty-title">Index is empty</div><p>Run nightly sync or upload notes to build the index</p><br><button class="btn btn-primary" onclick="triggerNightly()">🚀 Run Nightly Sync</button></div>`;
+  } catch(e) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">${esc(e.message)}</div></div>`;
+  }
+}
+
+// ── CHAT ──────────────────────────────────────────────────────────
+let chatHistory = [];
+function chatKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();} }
+
+function addBubble(text, role, sources) {
+  const el = document.getElementById('chat-msgs');
+  const d = document.createElement('div');
+  d.className = `bubble ${role}`;
+  d.innerHTML = esc(text).replace(/\n/g,'<br>');
+  if (sources&&sources.length) {
+    d.innerHTML += `<div class="sources-row">${sources.map(s=>`<span class="src-chip">📄 ${esc(s.title||s.source)}</span>`).join('')}</div>`;
+  }
+  el.appendChild(d);
+  el.scrollTop = el.scrollHeight;
+  return d;
+}
+
+async function sendChat() {
+  const inp = document.getElementById('chat-input');
+  const q = inp.value.trim();
+  if (!q) return;
+  inp.value = '';
+  const btn = document.getElementById('chat-btn');
+  btn.disabled = true;
+  addBubble(q, 'user');
+  chatHistory.push({role:'user',content:q});
+  const thinking = addBubble('Searching knowledge base…', 'thinking');
+  try {
+    const d = await api('POST', '/chat', {question:q, history:chatHistory.slice(-8)});
+    thinking.remove();
+    addBubble(d.answer, 'bot', d.sources||[]);
+    chatHistory.push({role:'assistant',content:d.answer});
+  } catch(e) {
+    thinking.remove();
+    addBubble('Error: '+e.message, 'bot');
+  }
+  btn.disabled = false;
+  inp.focus();
+}
+
+function clearChat() {
+  chatHistory = [];
+  document.getElementById('chat-msgs').innerHTML = `<div class="bubble bot">👋 Hi! Ask me anything — I'll search your entire vault to find the best answer.</div>`;
+}
+
+// ── SEARCH ────────────────────────────────────────────────────────
+async function doSearch() {
+  const q = document.getElementById('search-input').value.trim();
+  if (!q) return;
+  const el = document.getElementById('search-results');
+  el.innerHTML = '<div style="display:flex;align-items:center;gap:10px;color:var(--tx3);padding:16px 0"><div class="spin"></div> Searching…</div>';
+  try {
+    const {results} = await api('POST', '/search', {query:q, n_results:8});
+    el.innerHTML = results.length
+      ? results.map(r=>`
+          <div class="result-card" onclick="openNote('${esc(r.title)}')">
+            <div class="result-title">📄 ${esc(r.title||'Unknown')}</div>
+            <div class="result-content">${esc(r.content)}</div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <span class="result-score">Score: ${(r.score||0).toFixed(4)}</span>
+              <span class="tag">${esc(r.source_type||'unknown')}</span>
+            </div>
+          </div>`).join('')
+      : `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No results</div><p>Try different keywords or upload more content</p></div>`;
+  } catch(e) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">${esc(e.message)}</div></div>`;
+  }
+}
+
+// ── NIGHTLY ────────────────────────────────────────────────────────
+async function triggerNightly() {
+  const btn = document.getElementById('nightly-btn');
+  if (btn) { btn.disabled=true; btn.innerHTML='<div class="spin"></div> Running…'; }
+  try {
+    await api('POST', '/api/run-nightly');
+    toast('Nightly sync started! Reload in ~2 minutes to see results.', 'ok', 5000);
+  } catch(e) { toast('Failed to trigger sync: '+e.message, 'err'); }
+  setTimeout(() => { if(btn){btn.disabled=false;btn.innerHTML='🚀 Run Nightly Sync';} }, 8000);
+}
+
+function refreshAll() {
+  loadOverview();
+  toast('Refreshed!', 'ok', 1800);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
+document.addEventListener('DOMContentLoaded', loadOverview);
+</script>
+</body>
+</html>

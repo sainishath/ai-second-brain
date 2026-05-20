@@ -1,0 +1,50 @@
+# ── Python ──────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ── Virtual environment ─────────────────────────────────────────
+venv/
+.venv/
+env/
+ENV/
+
+# ── Environment / secrets ───────────────────────────────────────
+config/.env
+.env
+*.key
+
+# ── Vector database (large binary, user-generated) ─────────────
+data/chroma_db/
+
+# ── Personal data (never commit raw notes / journals) ───────────
+data/notes/
+data/briefs/
+data/google_drive/
+data/raw/
+data/logs/
+
+# ── Temp / test files ───────────────────────────────────────────
+test_upload_sample.md
+verify.py
+healthcheck.py
+*.log
+
+# ── OS / Editor ─────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+
+# ── Windows Task Scheduler exports ─────────────────────────────
+*.xml

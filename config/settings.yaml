@@ -1,0 +1,37 @@
+# settings.yaml — AI Second Brain Configuration
+# Most settings are overridden by .env — use this for non-secret config.
+
+app:
+  name: "AI Second Brain"
+  version: "1.0.0"
+
+ingestion:
+  chunk_size: 512        # tokens per chunk
+  chunk_overlap: 64      # token overlap between chunks
+  min_chunk_length: 50   # discard chunks shorter than this (chars)
+  supported_file_types:
+    - .pdf
+    - .txt
+    - .md
+    - .docx
+
+retrieval:
+  max_results: 8          # chunks returned per query
+  rrf_k: 60               # Reciprocal Rank Fusion constant
+  dense_weight: 0.6       # weight for vector search
+  bm25_weight: 0.4        # weight for keyword search
+
+generation:
+  max_tokens: 2048
+  temperature: 0.3        # lower = more factual
+  context_window_limit: 8  # max chunks to include in context
+
+api:
+  cors_origins:
+    - "http://localhost:3000"
+    - "http://localhost:5173"
+    - "chrome-extension://*"
+
+logging:
+  level: INFO
+  format: "[%(asctime)s] %(levelname)s: %(message)s"
