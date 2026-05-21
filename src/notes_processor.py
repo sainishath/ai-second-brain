@@ -37,7 +37,7 @@ class NotesProcessor:
 
     def _init_tracking_db(self):
         """Initialize SQLite table to track processed files."""
-        conn = sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(self.db_path, timeout=30.0)
         cursor = conn.cursor()
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS notes_tracking (
@@ -46,19 +46,45 @@ class NotesProcessor:
                 file_hash TEXT,
                 doc_id TEXT,
                 themes TEXT,
-                processed_at TEXT
+                processed_at TEXT,
+                source_url TEXT,
+                is_archived INTEGER DEFAULT 0,
+                tags TEXT
             )
         """)
+        
+        # Check if we need to migrate an existing table that lacks the columns
+        cursor.execute("PRAGMA table_info(notes_tracking)")
+        columns = [row[1] for row in cursor.fetchall()]
+        
+        if "source_url" not in columns:
+            try:
+                cursor.execute("ALTER TABLE notes_tracking ADD COLUMN source_url TEXT")
+            except Exception as e:
+                log(f"[NotesProcessor] Migration warning adding source_url: {e}", "WARN")
+        if "is_archived" not in columns:
+            try:
+                cursor.execute("ALTER TABLE notes_tracking ADD COLUMN is_archived INTEGER DEFAULT 0")
+            except Exception as e:
+                log(f"[NotesProcessor] Migration warning adding is_archived: {e}", "WARN")
+        if "tags" not in columns:
+            try:
+                cursor.execute("ALTER TABLE notes_tracking ADD COLUMN tags TEXT")
+            except Exception as e:
+                log(f"[NotesProcessor] Migration warning adding tags: {e}", "WARN")
+                
         conn.commit()
         conn.close()
 
     def _get_file_hash(self, path: Path) -> str:
-        """Compute MD5 hash of a file."""
-        hasher = hashlib.md5()
-        with open(path, "rb") as f:
-            for chunk in iter(lambda: f.read(4096), b""):
-                hasher.update(chunk)
-        return hasher.hexdigest()
+        """Compute MD5 hash of a file, normalizing line endings."""
+        try:
+            content = path.read_text(encoding="utf-8", errors="replace")
+            normalized = content.replace("\r\n", "\n")
+            return hashlib.md5(normalized.encode("utf-8")).hexdigest()
+        except Exception as e:
+            log(f"[NotesProcessor] Error hashing {path.name}: {e}", "ERROR")
+            return ""
 
     def parse_note(self, path: Path) -> Dict[str, Any]:
         """
@@ -124,8 +150,28 @@ Categories:"""
         
         try:
             response = self.generator.generate(prompt, context="Metadata Classification Engine")
-            categories = [c.strip() for c in response.split(",") if c.strip()]
-            return categories
+            
+            # Robust parsing: extract only allowed categories that are mentioned in the response
+            allowed_categories = ["Work", "Machine Learning", "Coding", "Productivity", "Personal", "Finance", "Health", "Research", "General"]
+            response_lower = response.lower()
+            
+            categories = []
+            for cat in allowed_categories:
+                # Match case-insensitively
+                if cat.lower() in response_lower:
+                    categories.append(cat)
+                    
+            if not categories:
+                # Fallback if no standard category matched
+                raw_cats = [c.strip() for c in response.split(",") if c.strip()]
+                for c in raw_cats:
+                    if len(c) < 30:
+                        categories.append(c.title())
+            
+            if not categories:
+                categories = ["General"]
+                
+            return categories[:2]
         except Exception as e:
             log(f"[NotesProcessor] LLM theme clustering failed: {e}", "WARN")
             return ["General"]
@@ -153,7 +199,7 @@ Categories:"""
 
         # Update metadata
         fm["type"] = fm.get("type", "concept" if "research" not in path.name.lower() else "research")
-        fm["status"] = "processed"
+        fm["status"] = "indexed"
         fm["created"] = fm.get("created", datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"))
         
         tags = fm.get("tags", [])
@@ -277,10 +323,10 @@ Welcome to your centralized Second Brain index. All notes are organized here by 
         last_modified = path.stat().st_mtime
 
         # Check if already processed and unmodified
-        conn = sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(self.db_path, timeout=30.0)
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT file_hash, doc_id, themes FROM notes_tracking WHERE filepath = ?", 
+            "SELECT file_hash, doc_id, themes, source_url, is_archived, tags FROM notes_tracking WHERE filepath = ?", 
             (str(path),)
         )
         row = cursor.fetchone()
@@ -288,6 +334,9 @@ Welcome to your centralized Second Brain index. All notes are organized here by 
         if row and row[0] == file_hash:
             conn.close()
             return {"status": "unmodified", "doc_id": row[1]}
+
+        existing_source_url = row[3] if row else None
+        existing_is_archived = row[4] if row else 0
 
         log(f"[NotesProcessor] Processing note: {path.name}")
         parsed = self.parse_note(path)
@@ -305,15 +354,39 @@ Welcome to your centralized Second Brain index. All notes are organized here by 
         # Update note frontmatter with tags/themes
         self.update_frontmatter(path, parsed, themes)
 
+        # Recalculate hash and modified time to reflect updated frontmatter content on disk
+        file_hash = self._get_file_hash(path)
+        last_modified = path.stat().st_mtime
+
         # Update centralized index.md
         self.update_centralized_index(path, themes)
+
+        # Check if archived/source_url in frontmatter
+        fm = parsed["frontmatter"]
+        is_archived = existing_is_archived
+        if fm:
+            fm_archived = fm.get("archived")
+            if fm_archived is not None:
+                is_archived = 1 if fm_archived else 0
+            
+        source_url = existing_source_url
+        if fm and fm.get("source_url"):
+            source_url = fm.get("source_url")
+
+        # Get tags comma-separated list
+        tags_list = fm.get("tags", []) if fm else []
+        if isinstance(tags_list, list):
+            tags_list = [str(t).strip() for t in tags_list if t]
+        else:
+            tags_list = [str(tags_list).strip()] if tags_list else []
+        tags_str = ",".join(tags_list)
 
         # Track processing status in sqlite database
         cursor.execute("""
             INSERT OR REPLACE INTO notes_tracking 
-            (filepath, last_modified, file_hash, doc_id, themes, processed_at) 
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (str(path), last_modified, file_hash, doc_id, ",".join(themes), datetime.utcnow().isoformat()))
+            (filepath, last_modified, file_hash, doc_id, themes, processed_at, source_url, is_archived, tags) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (str(path), last_modified, file_hash, doc_id, ",".join(themes), datetime.utcnow().isoformat(), source_url, is_archived, tags_str))
         conn.commit()
         conn.close()
 

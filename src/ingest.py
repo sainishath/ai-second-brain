@@ -44,7 +44,9 @@ class Document:
 def load_url(url: str) -> Document:
     """Scrape a webpage and convert to clean Markdown."""
     log(f"Fetching URL: {url}")
-    headers = {"User-Agent": "Mozilla/5.0 (compatible; SecondBrain/1.0)"}
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
 
     with httpx.Client(follow_redirects=True, timeout=15) as client:
         response = client.get(url, headers=headers)
@@ -202,7 +204,7 @@ def ingest(
         elif ext == ".docx":
             doc = load_docx(file)
         elif ext in [".txt", ".md"]:
-            doc = load_text(Path(file).read_text(), title=Path(file).stem)
+            doc = load_text(Path(file).read_text(encoding="utf-8", errors="replace"), title=Path(file).stem)
         else:
             raise ValueError(f"Unsupported file type: {ext}")
     elif text:
@@ -244,6 +246,19 @@ def ingest(
         embeddings=embeddings.tolist(),
         metadatas=metadatas,
     )
+
+    # Write to SQL documents table
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT OR REPLACE INTO documents (doc_id, title, source, source_type, chunks, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (doc.doc_id, doc.title, doc.source, doc.source_type, len(chunks), datetime.utcnow().isoformat()))
+        conn.commit()
+        conn.close()
+    except Exception as db_err:
+        log(f"[Ingest DB Error] {db_err}", "WARN")
 
     log(f"Ingested: '{doc.title}' -> {len(chunks)} chunks stored.")
     return {

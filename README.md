@@ -2,11 +2,36 @@
 
 > **An autonomous, self-updating personal knowledge base powered by local LLMs, semantic search, and nightly AI agents — running entirely on your own machine.**
 
+![AI Second Brain Network Graph](docs/graph_screenshot.png)
+
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.136-009688?style=flat&logo=fastapi&logoColor=white)
 ![ChromaDB](https://img.shields.io/badge/ChromaDB-Vector_DB-FF6B35?style=flat)
 ![Ollama](https://img.shields.io/badge/Ollama-Local_LLM-black?style=flat)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat)
+
+---
+
+## ✨ Real-World Showcase: User Note Example
+
+To see how manual notes are processed, here is an actual user note created and indexed in the brain (stored in [docs/showcase_note.md](docs/showcase_note.md)):
+
+```markdown
+---
+archived: false
+created: '2026-05-21 15:43:02'
+status: indexed
+tags:
+- Work
+- Machine Learning
+type: note
+---
+
+I have built this AI second brain thing, and it works!!!!
+And I made this with Google's antigravity 2.0 with Gemini 3.5 Flash and Claude Sonnet. In between, what I did was search for this AI second brain on YouTube and found someone who already built this. I took their GitHub starter repo, gave it to Antigravity, made it make an implementation plan, and with that plan I gave it to Claude to verify its quality, and it came out at 50 percent good, so I looped 3-5 times and got to a 98 percent ready plan and gave it to Gemini 3.5 Flash, which was making the plan, and I was testing it in my Claude desktop app free version, and then let the agent handle everything from basic backend to website designing, and it gave a finished product, and I manually tested and found bugs, told about them to the agent, and it fixed them in one go, and now I am typing this as a test, and it works!!!! next step is to upload to github
+```
+
+This showcases how manual entries are parsed, assigned frontmatter metadata (like `status: indexed` and clustered tags such as `Work` and `Machine Learning`), linked in `index.md`, and visualised dynamically in the network graph interface.
 
 ---
 
@@ -34,6 +59,7 @@ A full-featured web dashboard served at `http://localhost:8000`:
 - **Index** — Categorized WikiLink index of all your knowledge.
 - **Ask Brain** — RAG-powered chat with your full knowledge base via Ollama.
 - **Search** — Semantic search by meaning, not just keywords.
+- **Interactive Graph** — 2D force-directed node visualization highlighting matches and connectivity.
 
 ---
 
