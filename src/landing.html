@@ -13,8 +13,10 @@
   <!-- Lucide Icons via CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
   
-  <!-- D3.js and Lenis CDN -->
+  <!-- D3, GSAP, and Lenis CDN -->
   <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.34/dist/lenis.min.js"></script>
   
   <style>
@@ -68,24 +70,7 @@
       background: var(--purple);
     }
 
-    /* ─── Canvas Particle Background ─────────────────────────── */
-    #bg-canvas {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      z-index: 0;
-      pointer-events: none;
-      opacity: 0.7;
-    }
-
-    /* ─── Structural Containers ──────────────────────────────── */
-    .relative-container {
-      position: relative;
-      z-index: 10;
-    }
-
+    /* ─── Header Navigation ─────────────────────────────────── */
     header {
       position: fixed;
       top: 0;
@@ -163,66 +148,98 @@
       box-shadow: 0 0 25px rgba(139, 92, 246, 0.45);
     }
 
-    /* ─── Hero Section ─── */
-    .hero-section {
-      min-height: 100vh;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 8rem 2rem 4rem 2rem;
-      display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
-      align-items: center;
-      gap: 4rem;
+    /* ─── Scroll Container & 3D Brain Hero ─────────────────── */
+    #scroll-container {
+      position: relative;
+      height: 400vh; /* Pinned for scrubbing sequence */
     }
 
-    .hero-content {
+    #sticky-wrapper {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+    }
+
+    #bg-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
       display: flex;
       flex-direction: column;
-      gap: 1.5rem;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 2rem;
     }
 
-    .hero-badge {
-      align-self: flex-start;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.4rem 1rem;
-      border-radius: 9999px;
-      background: rgba(139, 92, 246, 0.07);
-      border: 1px solid rgba(139, 92, 246, 0.2);
-      color: #c084fc;
-      font-size: 0.8rem;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
+    .hero-title-1 {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .hero-title-2, .hero-title-3 {
+      opacity: 0;
+      transform: translateY(50px);
+      pointer-events: none;
     }
 
     .hero-title {
       font-family: var(--font-title);
-      font-size: 3.75rem;
       font-weight: 800;
-      line-height: 1.15;
+      line-height: 1.1;
+      max-width: 900px;
+    }
+
+    .text-huge {
+      font-size: 5rem;
       background: linear-gradient(135deg, #ffffff 40%, #c084fc 80%, var(--purple) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
+    .text-gradient-cyan {
+      background: linear-gradient(135deg, #ffffff 30%, #22d3ee 80%, var(--cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .text-gradient-emerald {
+      background: linear-gradient(135deg, #ffffff 30%, #34d399 80%, var(--emerald) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
     .hero-description {
-      font-size: 1.1rem;
-      line-height: 1.6;
+      font-size: 1.25rem;
+      max-width: 600px;
       color: var(--text-muted);
+      margin-top: 1.5rem;
+      font-weight: 300;
+      line-height: 1.6;
     }
 
     .hero-actions {
       display: flex;
-      gap: 1rem;
-      margin-top: 1rem;
+      gap: 1.25rem;
+      margin-top: 2.5rem;
     }
 
     .btn {
       text-decoration: none;
-      padding: 0.85rem 1.75rem;
-      border-radius: 10px;
+      padding: 0.9rem 1.85rem;
+      border-radius: 9999px;
       font-family: var(--font-title);
       font-weight: 600;
       font-size: 1rem;
@@ -230,24 +247,27 @@
       align-items: center;
       gap: 0.5rem;
       transition: all 0.25s ease;
+      cursor: pointer;
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, var(--purple) 0%, #7c3aed 100%);
-      color: #fff;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 0 20px var(--purple-glow);
+      background: #ffffff;
+      color: #030307;
+      border: 1px solid #ffffff;
+      box-shadow: 0 0 25px rgba(255, 255, 255, 0.1);
     }
 
     .btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 0 30px rgba(139, 92, 246, 0.5);
+      box-shadow: 0 0 35px rgba(255, 255, 255, 0.25);
+      background: #f1f5f9;
     }
 
     .btn-secondary {
-      background: var(--card-bg);
+      background: rgba(255, 255, 255, 0.03);
       color: var(--text-main);
       border: 1px solid var(--border);
+      backdrop-filter: blur(8px);
     }
 
     .btn-secondary:hover {
@@ -256,13 +276,65 @@
       transform: translateY(-2px);
     }
 
-    /* ─── D3 Interactive Graph Container ─── */
+    /* ─── Visualizer Section ────────────────────────────────── */
+    .section-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 8rem 2rem 4rem 2rem;
+    }
+
+    .section-header {
+      text-align: center;
+      max-width: 600px;
+      margin: 0 auto 4rem auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .section-subtitle {
+      font-family: var(--font-title);
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--purple);
+    }
+
+    .section-title {
+      font-family: var(--font-title);
+      font-size: 2.75rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 50%, var(--text-muted) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .visualizer-split {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      align-items: center;
+      gap: 4rem;
+    }
+
+    .visualizer-text {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .visualizer-text h3 {
+      font-family: var(--font-title);
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+
     .graph-panel {
       position: relative;
       height: 480px;
       border-radius: 24px;
       background: rgba(255, 255, 255, 0.01);
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(12px);
       border: 1px solid var(--border);
       box-shadow: 0 20px 50px rgba(0,0,0,0.3);
       overflow: hidden;
@@ -334,41 +406,11 @@
     }
 
     /* ─── Vault Stats Section ─── */
-    .section-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 6rem 2rem;
-    }
-
-    .section-header {
-      text-align: center;
-      max-width: 600px;
-      margin: 0 auto 4rem auto;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .section-subtitle {
-      font-family: var(--font-title);
-      font-size: 0.9rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--purple);
-    }
-
-    .section-title {
-      font-family: var(--font-title);
-      font-size: 2.5rem;
-      font-weight: 700;
-    }
-
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 1.5rem;
-      margin-bottom: 4rem;
+      margin-top: 2rem;
     }
 
     .stat-card {
@@ -523,6 +565,7 @@
       border-top: 1px solid var(--border);
       background: #020204;
       padding: 3rem 2rem;
+      margin-top: 4rem;
     }
 
     .footer-container {
@@ -554,11 +597,19 @@
       color: var(--text-main);
     }
 
+    /* ─── Keyframe Animations ─── */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
     /* ─── Responsiveness ─── */
     @media (max-width: 1024px) {
-      .hero-section {
+      .text-huge {
+        font-size: 3.5rem;
+      }
+      .visualizer-split {
         grid-template-columns: 1fr;
-        padding-top: 6rem;
         gap: 3rem;
       }
       .graph-panel {
@@ -573,7 +624,7 @@
     }
 
     @media (max-width: 640px) {
-      .hero-title {
+      .text-huge {
         font-size: 2.75rem;
       }
       .stats-grid {
@@ -587,42 +638,48 @@
 </head>
 <body>
 
-  <!-- HTML5 Canvas Particle Synapses Backdrop -->
-  <canvas id="bg-canvas"></canvas>
-
-  <div class="relative-container">
-    <!-- Navbar Header -->
-    <header>
-      <div class="nav-container">
-        <a href="/" class="logo">
-          <i data-lucide="brain"></i>
-          AI SECOND BRAIN
-        </a>
-        <ul class="nav-links">
-          <li><a href="#features">Features</a></li>
-          <li><a href="#stats">Vault Metrics</a></li>
-          <li><a href="#graph">Visualizer</a></li>
-        </ul>
-        <a href="/dashboard" class="cta-nav" id="launch-cta">
-          Launch Brain
-        </a>
-      </div>
-    </header>
-
-    <!-- Main Hero Section -->
-    <section class="hero-section" id="hero">
-      <div class="hero-content">
-        <div class="hero-badge">
-          <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i>
-          Autonomous & Local v2
+  <!-- Pinned 3D Brain Scroll Sequence Hero -->
+  <section id="scroll-container">
+    <div id="sticky-wrapper">
+      <canvas id="bg-canvas"></canvas>
+      
+      <!-- Navbar Header -->
+      <header>
+        <div class="nav-container">
+          <a href="/" class="logo">
+            <i data-lucide="brain"></i>
+            AI SECOND BRAIN
+          </a>
+          <ul class="nav-links">
+            <li><a href="#visualizer">Visualizer</a></li>
+            <li><a href="#stats">Vault Metrics</a></li>
+            <li><a href="#features">Pillars</a></li>
+          </ul>
+          <a href="/dashboard" class="cta-nav" id="launch-cta">
+            Launch Brain
+          </a>
         </div>
-        <h1 class="hero-title">Your Second Brain, Autonomous & Local.</h1>
-        <p class="hero-description">
-          Transform your raw notes and files into a high-performance semantic knowledge web. Chat with your thoughts, explore connections with force-directed graphing, and let autonomous backend agents extract metadata, handle indexing, and audit tasks.
-        </p>
+      </header>
+
+      <!-- Narrative Overlay 1 (Initial View) -->
+      <div class="hero-overlay hero-title-1">
+        <h1 class="hero-title text-huge">AI SECOND BRAIN</h1>
+        <p class="hero-description">Centralize your local knowledge structures instantly.</p>
+      </div>
+
+      <!-- Narrative Overlay 2 (Scrolled 33%) -->
+      <div class="hero-overlay hero-title-2">
+        <h2 class="hero-title text-huge text-gradient-cyan">Automated Synthesis</h2>
+        <p class="hero-description">Connect pipelines directly to semantic node maps on port 8000.</p>
+      </div>
+
+      <!-- Narrative Overlay 3 (Scrolled 66%) -->
+      <div class="hero-overlay hero-title-3">
+        <h2 class="hero-title text-huge text-gradient-emerald">Think Fluidly.</h2>
+        <p class="hero-description">Your information. Structured, contextual, and completely local.</p>
         <div class="hero-actions">
           <a href="/dashboard" class="btn btn-primary" id="btn-hero-dashboard">
-            Open Dashboard
+            Access Core Engine
             <i data-lucide="arrow-up-right" style="width: 18px; height: 18px;"></i>
           </a>
           <a href="https://github.com/sainishath/ai-second-brain" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" id="btn-hero-github">
@@ -631,159 +688,176 @@
           </a>
         </div>
       </div>
+
+    </div>
+  </section>
+
+  <!-- Interactive Visualizer Section -->
+  <section class="section-container" id="visualizer">
+    <div class="visualizer-split">
+      <div class="visualizer-text">
+        <span class="section-subtitle">Mind Linkages</span>
+        <h2 class="section-title" style="text-align: left;">The Connection Web</h2>
+        <p style="color: var(--text-muted); line-height: 1.7; font-size: 1.05rem;">
+          Your notes are not isolated blocks. Our local backend indexing automatically parses Markdown wiki-links (`[[Note Name]]`) to construct a dynamic, unified knowledge graph. 
+        </p>
+        <p style="color: var(--text-muted); line-height: 1.7; font-size: 1.05rem;">
+          Drag and adjust nodes to freeze layout structures, hover over elements to reveal dynamic connections, and watch clusters self-arrange in real-time.
+        </p>
+        <a href="/dashboard" class="btn btn-secondary" style="align-self: flex-start; margin-top: 1rem;">
+          Interactive Workspace
+          <i data-lucide="chevrons-right" style="width: 16px; height: 16px;"></i>
+        </a>
+      </div>
       
-      <!-- Interactive D3 Mock/Live Knowledge Graph Panel -->
-      <div class="graph-panel" id="graph">
+      <div class="graph-panel">
         <div class="graph-panel-header">
           <div class="graph-panel-title">
             <i data-lucide="git-fork" style="width: 16px; height: 16px; transform: rotate(90deg); color: var(--purple);"></i>
-            Knowledge Visualizer
+            Connection Matrix
           </div>
           <span class="graph-badge">
             <i data-lucide="activity" style="width: 12px; height: 12px; animation: pulse 2s infinite;"></i>
-            Live Graph
+            Vault Graph
           </span>
         </div>
         <svg id="d3-mini-graph"></svg>
         <div class="graph-tooltip" id="mini-graph-tooltip"></div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- Vault Metrics Section -->
-    <section class="section-container" id="stats">
-      <div class="section-header">
-        <span class="section-subtitle">Real-time Metrics</span>
-        <h2 class="section-title">Knowledge Vault Overview</h2>
+  <!-- Vault Metrics Section -->
+  <section class="section-container" id="stats">
+    <div class="section-header">
+      <span class="section-subtitle">Real-time Metrics</span>
+      <h2 class="section-title">Knowledge Vault Overview</h2>
+    </div>
+    
+    <div class="stats-grid">
+      <!-- Metric: Total Notes -->
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-purple">
+          <i data-lucide="file-text"></i>
+        </div>
+        <div class="stat-number" id="stat-notes">0</div>
+        <div class="stat-label">Notes Enrolled</div>
       </div>
       
-      <div class="stats-grid">
-        <!-- Metric: Total Notes -->
-        <div class="stat-card">
-          <div class="stat-icon stat-icon-purple">
-            <i data-lucide="file-text"></i>
-          </div>
-          <div class="stat-number" id="stat-notes">0</div>
-          <div class="stat-label">Notes Enrolled</div>
+      <!-- Metric: Total Chunks -->
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-cyan">
+          <i data-lucide="database"></i>
         </div>
-        
-        <!-- Metric: Total Chunks -->
-        <div class="stat-card">
-          <div class="stat-icon stat-icon-cyan">
-            <i data-lucide="database"></i>
-          </div>
-          <div class="stat-number" id="stat-chunks">0</div>
-          <div class="stat-label">Vector Chunks</div>
-        </div>
-        
-        <!-- Metric: Total Categories -->
-        <div class="stat-card">
-          <div class="stat-icon stat-icon-emerald">
-            <i data-lucide="tag"></i>
-          </div>
-          <div class="stat-number" id="stat-categories">0</div>
-          <div class="stat-label">Active Categories</div>
-        </div>
-        
-        <!-- Metric: Total Links -->
-        <div class="stat-card">
-          <div class="stat-icon stat-icon-purple">
-            <i data-lucide="git-commit"></i>
-          </div>
-          <div class="stat-number" id="stat-links">0</div>
-          <div class="stat-label">Cross Connections</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Agent Pillars Section -->
-    <section class="section-container" id="features" style="padding-top: 0;">
-      <div class="section-header">
-        <span class="section-subtitle">Architecture System</span>
-        <h2 class="section-title">The Three Autonomous Agents</h2>
+        <div class="stat-number" id="stat-chunks">0</div>
+        <div class="stat-label">Vector Chunks</div>
       </div>
       
-      <div class="pillars-grid">
-        <!-- Card: The Archivist -->
-        <div class="pillar-card">
-          <div class="pillar-icon-box" style="background: rgba(139, 92, 246, 0.07); color: var(--purple);">
-            <i data-lucide="archive"></i>
-          </div>
-          <h3 class="pillar-title">The Archivist</h3>
-          <p class="pillar-description">
-            Monitors your local directory structure, auto-registers files, processes frontmatter metadata, and indexes file changes.
-          </p>
-          <ul class="pillar-features">
-            <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Directory auto-sync watch</li>
-            <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> SQLite metadata tracking</li>
-            <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Category structure management</li>
-          </ul>
+      <!-- Metric: Total Categories -->
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-emerald">
+          <i data-lucide="tag"></i>
         </div>
-        
-        <!-- Card: The Researcher -->
-        <div class="pillar-card">
-          <div class="pillar-icon-box" style="background: rgba(6, 182, 212, 0.07); color: var(--cyan);">
-            <i data-lucide="search"></i>
-          </div>
-          <h3 class="pillar-title">The Researcher</h3>
-          <p class="pillar-description">
-            Generates sentence-level embeddings, builds the vector database, and executes hybrid search algorithms for RAG answering.
-          </p>
-          <ul class="pillar-features">
-            <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> ChromaDB local vector store</li>
-            <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Full-text & vector hybrid search</li>
-            <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Citations & insights rendering</li>
-          </ul>
-        </div>
-        
-        <!-- Card: The Task Master -->
-        <div class="pillar-card">
-          <div class="pillar-icon-box" style="background: rgba(16, 185, 129, 0.07); color: var(--emerald);">
-            <i data-lucide="calendar"></i>
-          </div>
-          <h3 class="pillar-title">The Task Master</h3>
-          <p class="pillar-description">
-            Extracts scheduled tasks, deadlines, and markdown checklists to prepare dynamic briefs and track notes to-do progress.
-          </p>
-          <ul class="pillar-features">
-            <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Automatic checklist extraction</li>
-            <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Daily brief compilations</li>
-            <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Status badge lifecycle tracking</li>
-          </ul>
-        </div>
+        <div class="stat-number" id="stat-categories">0</div>
+        <div class="stat-label">Active Categories</div>
       </div>
-    </section>
+      
+      <!-- Metric: Total Links -->
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-purple">
+          <i data-lucide="git-commit"></i>
+        </div>
+        <div class="stat-number" id="stat-links">0</div>
+        <div class="stat-label">Cross Connections</div>
+      </div>
+    </div>
+  </section>
 
-    <!-- Footer -->
-    <footer>
-      <div class="footer-container">
-        <div class="footer-text">
-          &copy; 2026 AI Second Brain. Local, Secure, Autonomous.
+  <!-- Agent Pillars Section -->
+  <section class="section-container" id="features" style="padding-top: 0;">
+    <div class="section-header">
+      <span class="section-subtitle">Architecture System</span>
+      <h2 class="section-title">The Three Autonomous Agents</h2>
+    </div>
+    
+    <div class="pillars-grid">
+      <!-- Card: The Archivist -->
+      <div class="pillar-card">
+        <div class="pillar-icon-box" style="background: rgba(139, 92, 246, 0.07); color: var(--purple);">
+          <i data-lucide="archive"></i>
         </div>
-        <div class="footer-links">
-          <a href="https://github.com/sainishath/ai-second-brain" target="_blank" rel="noopener noreferrer">
-            <i data-lucide="github" style="width: 18px; height: 18px; display: inline; vertical-align: middle; margin-right: 0.3rem;"></i>
-            Repository
-          </a>
-        </div>
+        <h3 class="pillar-title">The Archivist</h3>
+        <p class="pillar-description">
+          Monitors your local directory structure, auto-registers files, processes frontmatter metadata, and indexes file changes.
+        </p>
+        <ul class="pillar-features">
+          <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Directory auto-sync watch</li>
+          <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> SQLite metadata tracking</li>
+          <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Category structure management</li>
+        </ul>
       </div>
-    </footer>
-  </div>
+      
+      <!-- Card: The Researcher -->
+      <div class="pillar-card">
+        <div class="pillar-icon-box" style="background: rgba(6, 182, 212, 0.07); color: var(--cyan);">
+          <i data-lucide="search"></i>
+        </div>
+        <h3 class="pillar-title">The Researcher</h3>
+        <p class="pillar-description">
+          Generates sentence-level embeddings, builds the vector database, and executes hybrid search algorithms for RAG answering.
+        </p>
+        <ul class="pillar-features">
+          <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> ChromaDB local vector store</li>
+          <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Full-text & vector hybrid search</li>
+          <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Citations & insights rendering</li>
+        </ul>
+      </div>
+      
+      <!-- Card: The Task Master -->
+      <div class="pillar-card">
+        <div class="pillar-icon-box" style="background: rgba(16, 185, 129, 0.07); color: var(--emerald);">
+          <i data-lucide="calendar"></i>
+        </div>
+        <h3 class="pillar-title">The Task Master</h3>
+        <p class="pillar-description">
+          Extracts scheduled tasks, deadlines, and markdown checklists to prepare dynamic briefs and track notes to-do progress.
+        </p>
+        <ul class="pillar-features">
+          <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Automatic checklist extraction</li>
+          <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Daily brief compilations</li>
+          <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Status badge lifecycle tracking</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-container">
+      <div class="footer-text">
+        &copy; 2026 AI Second Brain. Local, Secure, Autonomous.
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/sainishath/ai-second-brain" target="_blank" rel="noopener noreferrer">
+          <i data-lucide="github" style="width: 18px; height: 18px; display: inline; vertical-align: middle; margin-right: 0.3rem;"></i>
+          Repository
+        </a>
+      </div>
+    </div>
+  </footer>
 
   <script>
     // Initialize Lucide Icons
     lucide.createIcons();
 
-    // Initialize Lenis Smooth Scrolling
+    // ─── Initialize Lenis Smooth Scrolling ───────────────────
     const lenis = new Lenis({
-      duration: 1.2,
+      duration: 1.4,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       direction: 'vertical',
-      gestureDirection: 'vertical',
       smooth: true,
-      mouseMultiplier: 1,
+      mouseMultiplier: 1.0,
       smoothTouch: false,
-      touchMultiplier: 2,
-      infinite: false,
     });
 
     function raf(time) {
@@ -792,7 +866,14 @@
     }
     requestAnimationFrame(raf);
 
-    // ─── Canvas Particle Background Logic ─────────────────────
+    // Sync Lenis with GSAP ScrollTrigger
+    lenis.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add((time) => {
+      lenis.raf(time * 1000);
+    });
+    gsap.ticker.lagSmoothing(0);
+
+    // ─── 3D Programmatic Brain Projection ───────────────────
     const canvas = document.getElementById('bg-canvas');
     const ctx = canvas.getContext('2d');
 
@@ -802,128 +883,219 @@
     window.addEventListener('resize', () => {
       width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
+      draw3DBrain(brainState.rotationY, brainState.rotationX);
     });
 
-    const particles = [];
-    const maxParticles = 65;
-    const connectionDist = 110;
-    const mouse = { x: null, y: null, radius: 180 };
+    // Generate mathematical 3D brain point cloud
+    const points = [];
+    const numPoints = 550;
 
+    for (let i = 0; i < numPoints; i++) {
+      const isLeftLobe = Math.random() > 0.5;
+      const lobeSign = isLeftLobe ? -1 : 1;
+      
+      const u = Math.random() * Math.PI * 2;
+      const v = Math.random() * Math.PI - Math.PI / 2;
+      
+      // Upper cerebrum lobes shape
+      let x = 1.25 * Math.cos(v) * Math.cos(u) + lobeSign * 0.45;
+      let y = 1.05 * Math.cos(v) * Math.sin(u) + 0.2;
+      let z = 0.95 * Math.sin(v);
+      
+      // Add wrinkled folds (gyri/sulci)
+      const folds = Math.sin(x * 5) * Math.cos(y * 5) * Math.sin(z * 5) * 0.15;
+      x += folds;
+      y += folds;
+      z += folds;
+      
+      // Cerebellum (smaller clusters at lower-back)
+      if (Math.random() > 0.76) {
+        x = 0.75 * Math.cos(v) * Math.cos(u) + lobeSign * 0.25;
+        y = 0.5 * Math.cos(v) * Math.sin(u) - 0.7;
+        z = 0.65 * Math.sin(v) - 0.45;
+      }
+      
+      // Brain stem extending down
+      if (Math.random() > 0.93) {
+        x = (Math.random() - 0.5) * 0.2;
+        y = -1.1 - Math.random() * 0.5;
+        z = -0.15 + (Math.random() - 0.5) * 0.25;
+      }
+
+      points.push({ x, y, z });
+    }
+
+    // Interactive mouse coordinates for grid connection lighting
+    const mouse = { x: null, y: null, radius: 150 };
     window.addEventListener('mousemove', (e) => {
       mouse.x = e.clientX;
       mouse.y = e.clientY;
     });
-
     window.addEventListener('mouseleave', () => {
       mouse.x = null;
       mouse.y = null;
     });
 
-    class Particle {
-      constructor() {
-        this.x = Math.random() * width;
-        this.y = Math.random() * height;
-        this.vx = (Math.random() - 0.5) * 0.4;
-        this.vy = (Math.random() - 0.5) * 0.4;
-        this.radius = Math.random() * 2 + 1;
-      }
-
-      update() {
-        this.x += this.vx;
-        this.y += this.vy;
-
-        // Bounce borders
-        if (this.x < 0 || this.x > width) this.vx *= -1;
-        if (this.y < 0 || this.y > height) this.vy *= -1;
-
-        // Mouse attraction (subtle magnetic pull)
-        if (mouse.x !== null) {
-          const dx = mouse.x - this.x;
-          const dy = mouse.y - this.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < mouse.radius) {
-            const force = (mouse.radius - dist) / mouse.radius;
-            this.x += (dx / dist) * force * 0.6;
-            this.y += (dy / dist) * force * 0.6;
-          }
-        }
-      }
-
-      draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(139, 92, 246, 0.4)';
-        ctx.fill();
-      }
-    }
-
-    for (let i = 0; i < maxParticles; i++) {
-      particles.push(new Particle());
-    }
-
-    function animateParticles() {
+    // Render loop helper
+    function draw3DBrain(angleY, angleX) {
       ctx.clearRect(0, 0, width, height);
 
-      // Gradient background glow
-      const radialGlow = ctx.createRadialGradient(width/2, height/2, 10, width/2, height/2, Math.max(width, height));
-      radialGlow.addColorStop(0, '#060514');
+      // Deep radial lighting backdrop
+      const radialGlow = ctx.createRadialGradient(width / 2, height / 2, 10, width / 2, height / 2, Math.max(width, height));
+      radialGlow.addColorStop(0, '#060515');
       radialGlow.addColorStop(1, '#020204');
       ctx.fillStyle = radialGlow;
       ctx.fillRect(0, 0, width, height);
 
-      // Update & Draw Particles
-      particles.forEach(p => {
-        p.update();
-        p.draw();
+      const cosY = Math.cos(angleY);
+      const sinY = Math.sin(angleY);
+      const cosX = Math.cos(angleX);
+      const sinX = Math.sin(angleX);
+
+      // Project points from 3D coordinate space to 2D canvas coordinates
+      const projected = points.map((p, idx) => {
+        // Rotate around Y-axis
+        let x1 = p.x * cosY - p.z * sinY;
+        let z1 = p.x * sinY + p.z * cosY;
+        
+        // Rotate around X-axis
+        let y2 = p.y * cosX - z1 * sinX;
+        let z2 = p.y * sinX + z1 * cosX;
+        
+        // Perspective factor
+        const perspective = 300 / (300 + z2);
+        
+        // Scale and shift coordinates to screen center
+        // Tighter bounds on small devices
+        const scaleFactor = Math.min(width, height) * 0.28;
+        const xProjected = width / 2 + x1 * perspective * scaleFactor;
+        const yProjected = height / 2 - y2 * perspective * scaleFactor;
+        
+        return { x: xProjected, y: yProjected, z: z2, perspective: perspective, index: idx };
       });
 
-      // Draw Connections (Synapses)
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x;
-          const dy = particles[i].y - particles[j].y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
+      // Depth sorting (Painters algorithm: draw background nodes first)
+      projected.sort((a, b) => b.z - a.z);
 
-          if (dist < connectionDist) {
-            const alpha = (1 - dist / connectionDist) * 0.15;
-            ctx.strokeStyle = `rgba(139, 92, 246, ${alpha})`;
-            ctx.lineWidth = 0.8;
+      // Draw connection synapses between close 3D coordinates
+      ctx.lineWidth = 0.6;
+      for (let i = 0; i < projected.length; i++) {
+        const p1_proj = projected[i];
+        const p1_orig = points[p1_proj.index];
+
+        for (let j = i + 1; j < projected.length; j++) {
+          const p2_proj = projected[j];
+          const p2_orig = points[p2_proj.index];
+
+          // Compute absolute distance in 3D coordinate model
+          const dx = p1_orig.x - p2_orig.x;
+          const dy = p1_orig.y - p2_orig.y;
+          const dz = p1_orig.z - p2_orig.z;
+          const dist3D = dx*dx + dy*dy + dz*dz;
+
+          // Connect if points fall within structural threshold bounds
+          if (dist3D < 0.16) {
+            // Compute screen coordinates distance to mouse for interactive hover illumination
+            let mouseGlowAlpha = 0.0;
+            if (mouse.x !== null) {
+              const mx1 = (p1_proj.x + p2_proj.x) / 2 - mouse.x;
+              const my1 = (p1_proj.y + p2_proj.y) / 2 - mouse.y;
+              const distMouse = Math.sqrt(mx1*mx1 + my1*my1);
+              if (distMouse < mouse.radius) {
+                mouseGlowAlpha = (1 - distMouse / mouse.radius) * 0.45;
+              }
+            }
+
+            // Normal depth-based opacity
+            const avgZ = (p1_proj.z + p2_proj.z) / 2;
+            const depthAlpha = Math.max(0.01, (1 - (avgZ + 1.5) / 3) * 0.12);
+            
+            if (mouseGlowAlpha > 0) {
+              ctx.strokeStyle = `rgba(6, 182, 212, ${depthAlpha + mouseGlowAlpha})`;
+              ctx.lineWidth = 1.0;
+            } else {
+              ctx.strokeStyle = `rgba(139, 92, 246, ${depthAlpha})`;
+              ctx.lineWidth = 0.6;
+            }
+
             ctx.beginPath();
-            ctx.moveTo(particles[i].x, particles[i].y);
-            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.moveTo(p1_proj.x, p1_proj.y);
+            ctx.lineTo(p2_proj.x, p2_proj.y);
             ctx.stroke();
           }
         }
       }
 
-      // Draw Glowing Mouse Synapses
-      if (mouse.x !== null) {
-        let targets = [];
-        particles.forEach(p => {
-          const dx = mouse.x - p.x;
-          const dy = mouse.y - p.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < mouse.radius - 20) {
-            targets.push({ p, dist });
-          }
-        });
+      // Draw projected particle nodes
+      projected.forEach(p => {
+        const depthRatio = (p.z + 1.5) / 3; // normalized depth ratio (0 to 1)
+        const size = Math.max(0.6, (1 - depthRatio) * 3 + 0.6);
         
-        // Connect to nearest 5 particles
-        targets.sort((a,b) => a.dist - b.dist).slice(0, 5).forEach(t => {
-          const alpha = (1 - t.dist / (mouse.radius - 20)) * 0.25;
-          ctx.strokeStyle = `rgba(6, 182, 212, ${alpha})`;
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(mouse.x, mouse.y);
-          ctx.lineTo(t.p.x, t.p.y);
-          ctx.stroke();
-        });
-      }
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
+        
+        // Highlight nodes close to mouse coordinates
+        let isHovered = false;
+        if (mouse.x !== null) {
+          const dx = p.x - mouse.x;
+          const dy = p.y - mouse.y;
+          if (dx*dx + dy*dy < mouse.radius * mouse.radius * 0.2) {
+            isHovered = true;
+          }
+        }
 
-      requestAnimationFrame(animateParticles);
+        if (isHovered) {
+          ctx.fillStyle = `rgba(6, 182, 212, ${1.1 - depthRatio})`;
+        } else if (depthRatio < 0.35) {
+          ctx.fillStyle = `rgba(168, 85, 247, ${1 - depthRatio})`; // Light purple front
+        } else {
+          ctx.fillStyle = `rgba(107, 33, 168, ${1 - depthRatio})`; // Dark purple depth
+        }
+        ctx.fill();
+      });
     }
 
-    animateParticles();
+    // Initial state object for GSAP Tweens
+    const brainState = { rotationY: 0, rotationX: 0.25 };
+
+    // Draw initial frame
+    draw3DBrain(brainState.rotationY, brainState.rotationX);
+
+    // ─── GSAP ScrollTrigger Sequence ──────────────────────────
+    gsap.registerPlugin(ScrollTrigger);
+
+    // 1. Scrub 3D Brain rotation on Scroll
+    gsap.to(brainState, {
+      rotationY: Math.PI * 4, // 2 full spins
+      rotationX: 0.8,
+      scrollTrigger: {
+        trigger: "#scroll-container",
+        start: "top top",
+        end: "bottom bottom",
+        scrub: 1.5,
+        onUpdate: () => {
+          draw3DBrain(brainState.rotationY, brainState.rotationX);
+        }
+      }
+    });
+
+    // 2. Timeline to scrub overlay fading sequences
+    gsap.timeline({
+      scrollTrigger: {
+        trigger: "#scroll-container",
+        start: "top top",
+        end: "bottom bottom",
+        scrub: true,
+      }
+    })
+    // Title 1 transitions OUT
+    .to(".hero-title-1", { opacity: 0, y: -60, duration: 1.5, pointerEvents: 'none' })
+    // Title 2 transitions IN
+    .to(".hero-title-2", { opacity: 1, y: 0, duration: 1.5, pointerEvents: 'auto' }, "+=0.2")
+    // Title 2 transitions OUT
+    .to(".hero-title-2", { opacity: 0, y: -60, duration: 1.5, pointerEvents: 'none' }, "+=1.5")
+    // Title 3 transitions IN
+    .to(".hero-title-3", { opacity: 1, y: 0, duration: 1.5, pointerEvents: 'auto' }, "+=0.2");
 
     // ─── Dynamic Vault Stats Counters ────────────────────────
     const statsElements = {
@@ -952,18 +1124,18 @@
       window.requestAnimationFrame(step);
     }
 
-    // Default mock figures in case backend is offline
+    // Default fallback mock values if API is unavailable
     let statsData = {
-      total_notes: 124,
-      total_chunks: 1420,
-      total_categories: 12,
-      total_links: 284
+      total_notes: 142,
+      total_chunks: 1280,
+      total_categories: 9,
+      total_links: 394
     };
 
     // Load Stats from Backend
     fetch('/api/overview')
       .then(res => {
-        if (!res.ok) throw new Error("Backend offline");
+        if (!res.ok) throw new Error("Offline");
         return res.json();
       })
       .then(data => {
@@ -979,41 +1151,49 @@
       });
 
     function triggerStatsAnimation() {
-      animateValue(statsElements.notes, statsData.total_notes, 1500);
-      animateValue(statsElements.chunks, statsData.total_chunks, 1800);
-      animateValue(statsElements.categories, statsData.total_categories, 1200);
-      animateValue(statsElements.links, statsData.total_links, 1600);
+      // Set up triggers so that numbers animate only when scrolled into view
+      ScrollTrigger.create({
+        trigger: "#stats",
+        start: "top 80%",
+        onEnter: () => {
+          animateValue(statsElements.notes, statsData.total_notes, 1500);
+          animateValue(statsElements.chunks, statsData.total_chunks, 1800);
+          animateValue(statsElements.categories, statsData.total_categories, 1200);
+          animateValue(statsElements.links, statsData.total_links, 1600);
+        },
+        once: true
+      });
     }
 
     // ─── D3.js Network Graph Logic ────────────────────────────
     const d3Container = document.getElementById('d3-mini-graph');
     const tooltip = document.getElementById('mini-graph-tooltip');
     
-    // Preset mock graph nodes/links in case backend lacks links
+    // Fallback Mock Graph Nodes/Links
     const mockNodes = [
-      { id: "Zettelkasten", group: 1, type: "note" },
+      { id: "Zettelkasten Intro", group: 1, type: "note" },
       { id: "PARA Framework", group: 1, type: "note" },
-      { id: "Projects", group: 2, type: "note" },
-      { id: "Areas", group: 2, type: "note" },
-      { id: "Resources", group: 2, type: "note" },
-      { id: "Archives", group: 2, type: "note" },
-      { id: "Daily Brief", group: 3, type: "brief" },
-      { id: "Inbox", group: 4, type: "note" },
-      { id: "Local Database", group: 4, type: "note" }
+      { id: "Projects Lobe", group: 2, type: "note" },
+      { id: "Areas Lobe", group: 2, type: "note" },
+      { id: "Resources Lobe", group: 2, type: "note" },
+      { id: "Archives Lobe", group: 2, type: "note" },
+      { id: "Daily Sync Note", group: 3, type: "brief" },
+      { id: "Metadata Database", group: 4, type: "note" },
+      { id: "ChromaDB Core", group: 4, type: "note" }
     ];
 
     const mockLinks = [
-      { source: "Zettelkasten", target: "Inbox", type: "wiki" },
-      { source: "PARA Framework", target: "Projects", type: "wiki" },
-      { source: "PARA Framework", target: "Areas", type: "wiki" },
-      { source: "PARA Framework", target: "Resources", type: "wiki" },
-      { source: "PARA Framework", target: "Archives", type: "wiki" },
-      { source: "Daily Brief", target: "Projects", type: "wiki" },
-      { source: "Daily Brief", target: "Zettelkasten", type: "wiki" },
-      { source: "Inbox", target: "Local Database", type: "wiki" }
+      { source: "Zettelkasten Intro", target: "Metadata Database", type: "wiki" },
+      { source: "PARA Framework", target: "Projects Lobe", type: "wiki" },
+      { source: "PARA Framework", target: "Areas Lobe", type: "wiki" },
+      { source: "PARA Framework", target: "Resources Lobe", type: "wiki" },
+      { source: "PARA Framework", target: "Archives Lobe", type: "wiki" },
+      { source: "Daily Sync Note", target: "Projects Lobe", type: "wiki" },
+      { source: "Daily Sync Note", target: "Zettelkasten Intro", type: "wiki" },
+      { source: "Metadata Database", target: "ChromaDB Core", type: "wiki" }
     ];
 
-    // Load actual graph data
+    // Query live network graph from API
     fetch('/api/notes/graph')
       .then(res => {
         if (!res.ok) throw new Error("Offline");
@@ -1036,9 +1216,8 @@
 
       let rect = d3Container.getBoundingClientRect();
       let width = rect.width || 500;
-      let height = rect.height || 400;
+      let height = rect.height || 480;
 
-      // Container group for pan/zoom
       const g = svg.append("g");
 
       // Setup D3 Force Simulation
@@ -1094,7 +1273,7 @@
 
           // Tooltip show
           tooltip.style.opacity = 1;
-          tooltip.innerHTML = `<strong>${d.id}</strong><span style="display:block;font-size:0.7rem;color:var(--text-muted)">Type: ${d.type || 'note'}</span>`;
+          tooltip.innerHTML = `<strong>${d.id}</strong><span style="display:block;font-size:0.75rem;color:var(--text-muted)">Type: ${d.type || 'note'}</span>`;
         })
         .on("mouseleave", function(event, d) {
           d3.select(this)
@@ -1168,7 +1347,7 @@
       window.addEventListener('resize', () => {
         let newRect = d3Container.getBoundingClientRect();
         let newW = newRect.width || 500;
-        let newH = newRect.height || 400;
+        let newH = newRect.height || 480;
         simulation.force("center", d3.forceCenter(newW / 2, newH / 2));
         simulation.alpha(0.3).restart();
       });
