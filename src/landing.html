@@ -1090,12 +1090,12 @@
     })
     // Title 1 transitions OUT
     .to(".hero-title-1", { opacity: 0, y: -60, duration: 1.5, pointerEvents: 'none' })
-    // Title 2 transitions IN
-    .to(".hero-title-2", { opacity: 1, y: 0, duration: 1.5, pointerEvents: 'auto' }, "+=0.2")
-    // Title 2 transitions OUT
+    // Title 2 transitions IN (overlaps Title 1's fade out for a smooth cross-fade)
+    .to(".hero-title-2", { opacity: 1, y: 0, duration: 1.5, pointerEvents: 'auto' }, "-=1.0")
+    // Title 2 transitions OUT (after static reading window)
     .to(".hero-title-2", { opacity: 0, y: -60, duration: 1.5, pointerEvents: 'none' }, "+=1.5")
-    // Title 3 transitions IN
-    .to(".hero-title-3", { opacity: 1, y: 0, duration: 1.5, pointerEvents: 'auto' }, "+=0.2");
+    // Title 3 transitions IN (overlaps Title 2's fade out for a smooth cross-fade)
+    .to(".hero-title-3", { opacity: 1, y: 0, duration: 1.5, pointerEvents: 'auto' }, "-=1.0");
 
     // ─── Dynamic Vault Stats Counters ────────────────────────
     const statsElements = {
