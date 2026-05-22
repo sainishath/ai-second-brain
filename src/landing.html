@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Second Brain — Autonomous & Local</title>
+  
+  <!-- Premium Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons via CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- D3.js and Lenis CDN -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.34/dist/lenis.min.js"></script>
+  
+  <style>
+    /* ─── Core Stylesheet & Palette ───────────────────────────── */
+    :root {
+      --bg: #030307;
+      --card-bg: rgba(255, 255, 255, 0.02);
+      --card-hover-bg: rgba(255, 255, 255, 0.05);
+      --border: rgba(255, 255, 255, 0.07);
+      --border-hover: rgba(255, 255, 255, 0.15);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      
+      --purple: #8b5cf6;
+      --purple-glow: rgba(139, 92, 246, 0.25);
+      --cyan: #06b6d4;
+      --cyan-glow: rgba(6, 182, 212, 0.25);
+      --emerald: #10b981;
+      --emerald-glow: rgba(16, 185, 129, 0.25);
+      
+      --font-title: 'Outfit', 'Inter', sans-serif;
+      --font-body: 'Inter', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      overflow-x: hidden;
+      scroll-behavior: auto; /* Handled by Lenis */
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #05050a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1c1b2d;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--purple);
+    }
+
+    /* ─── Canvas Particle Background ─────────────────────────── */
+    #bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    /* ─── Structural Containers ──────────────────────────────── */
+    .relative-container {
+      position: relative;
+      z-index: 10;
+    }
+
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 100;
+      background: rgba(3, 3, 7, 0.6);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      transition: all 0.3s ease;
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.25rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-family: var(--font-title);
+      font-weight: 700;
+      font-size: 1.35rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      text-decoration: none;
+      color: var(--text-main);
+      background: linear-gradient(135deg, #fff 30%, var(--purple) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo i {
+      stroke: var(--purple);
+      -webkit-text-fill-color: initial;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: color 0.2s ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--text-main);
+    }
+
+    .cta-nav {
+      text-decoration: none;
+      padding: 0.6rem 1.25rem;
+      border-radius: 8px;
+      font-family: var(--font-title);
+      font-weight: 600;
+      font-size: 0.9rem;
+      background: linear-gradient(135deg, var(--purple) 0%, #7c3aed 100%);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 15px var(--purple-glow);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .cta-nav:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 25px rgba(139, 92, 246, 0.45);
+    }
+
+    /* ─── Hero Section ─── */
+    .hero-section {
+      min-height: 100vh;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 8rem 2rem 4rem 2rem;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      align-items: center;
+      gap: 4rem;
+    }
+
+    .hero-content {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .hero-badge {
+      align-self: flex-start;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 1rem;
+      border-radius: 9999px;
+      background: rgba(139, 92, 246, 0.07);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      color: #c084fc;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .hero-title {
+      font-family: var(--font-title);
+      font-size: 3.75rem;
+      font-weight: 800;
+      line-height: 1.15;
+      background: linear-gradient(135deg, #ffffff 40%, #c084fc 80%, var(--purple) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-description {
+      font-size: 1.1rem;
+      line-height: 1.6;
+      color: var(--text-muted);
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .btn {
+      text-decoration: none;
+      padding: 0.85rem 1.75rem;
+      border-radius: 10px;
+      font-family: var(--font-title);
+      font-weight: 600;
+      font-size: 1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.25s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--purple) 0%, #7c3aed 100%);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 20px var(--purple-glow);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 30px rgba(139, 92, 246, 0.5);
+    }
+
+    .btn-secondary {
+      background: var(--card-bg);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--card-hover-bg);
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+    }
+
+    /* ─── D3 Interactive Graph Container ─── */
+    .graph-panel {
+      position: relative;
+      height: 480px;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.01);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .graph-panel-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      z-index: 20;
+    }
+
+    .graph-panel-title {
+      font-family: var(--font-title);
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .graph-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.2);
+      color: var(--cyan);
+      font-size: 0.75rem;
+    }
+
+    #d3-mini-graph {
+      width: 100%;
+      height: 100%;
+      flex-grow: 1;
+      cursor: grab;
+      z-index: 10;
+    }
+
+    #d3-mini-graph:active {
+      cursor: grabbing;
+    }
+
+    .graph-tooltip {
+      position: absolute;
+      bottom: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(10, 10, 15, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--purple);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      color: var(--text-main);
+      z-index: 30;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    }
+
+    /* ─── Vault Stats Section ─── */
+    .section-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 6rem 2rem;
+    }
+
+    .section-header {
+      text-align: center;
+      max-width: 600px;
+      margin: 0 auto 4rem auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .section-subtitle {
+      font-family: var(--font-title);
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--purple);
+    }
+
+    .section-title {
+      font-family: var(--font-title);
+      font-size: 2.5rem;
+      font-weight: 700;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 4rem;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2.25rem 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, transparent 80%, var(--purple-glow) 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--border-hover);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .stat-card:hover::before {
+      opacity: 1;
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-icon-purple {
+      background: rgba(139, 92, 246, 0.08);
+      color: var(--purple);
+    }
+    .stat-icon-cyan {
+      background: rgba(6, 182, 212, 0.08);
+      color: var(--cyan);
+    }
+    .stat-icon-emerald {
+      background: rgba(16, 185, 129, 0.08);
+      color: var(--emerald);
+    }
+
+    .stat-number {
+      font-family: var(--font-title);
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .stat-label {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* ─── Agent Pillars Section ─── */
+    .pillars-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+    }
+
+    .pillar-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .pillar-card:hover {
+      transform: translateY(-8px);
+      border-color: rgba(139, 92, 246, 0.3);
+      box-shadow: 0 15px 40px rgba(139, 92, 246, 0.1);
+    }
+
+    .pillar-icon-box {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.3s ease;
+    }
+
+    .pillar-card:hover .pillar-icon-box {
+      transform: scale(1.1);
+    }
+
+    .pillar-title {
+      font-family: var(--font-title);
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    .pillar-description {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: var(--text-muted);
+    }
+
+    .pillar-features {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      margin-top: 0.5rem;
+    }
+
+    .pillar-features li {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .pillar-features li i {
+      color: var(--purple);
+      flex-shrink: 0;
+    }
+
+    /* ─── Footer Section ─── */
+    footer {
+      border-top: 1px solid var(--border);
+      background: #020204;
+      padding: 3rem 2rem;
+    }
+
+    .footer-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-text {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.2s ease;
+    }
+
+    .footer-links a:hover {
+      color: var(--text-main);
+    }
+
+    /* ─── Responsiveness ─── */
+    @media (max-width: 1024px) {
+      .hero-section {
+        grid-template-columns: 1fr;
+        padding-top: 6rem;
+        gap: 3rem;
+      }
+      .graph-panel {
+        height: 380px;
+      }
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .pillars-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .hero-title {
+        font-size: 2.75rem;
+      }
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      .nav-links {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HTML5 Canvas Particle Synapses Backdrop -->
+  <canvas id="bg-canvas"></canvas>
+
+  <div class="relative-container">
+    <!-- Navbar Header -->
+    <header>
+      <div class="nav-container">
+        <a href="/" class="logo">
+          <i data-lucide="brain"></i>
+          AI SECOND BRAIN
+        </a>
+        <ul class="nav-links">
+          <li><a href="#features">Features</a></li>
+          <li><a href="#stats">Vault Metrics</a></li>
+          <li><a href="#graph">Visualizer</a></li>
+        </ul>
+        <a href="/dashboard" class="cta-nav" id="launch-cta">
+          Launch Brain
+        </a>
+      </div>
+    </header>
+
+    <!-- Main Hero Section -->
+    <section class="hero-section" id="hero">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i>
+          Autonomous & Local v2
+        </div>
+        <h1 class="hero-title">Your Second Brain, Autonomous & Local.</h1>
+        <p class="hero-description">
+          Transform your raw notes and files into a high-performance semantic knowledge web. Chat with your thoughts, explore connections with force-directed graphing, and let autonomous backend agents extract metadata, handle indexing, and audit tasks.
+        </p>
+        <div class="hero-actions">
+          <a href="/dashboard" class="btn btn-primary" id="btn-hero-dashboard">
+            Open Dashboard
+            <i data-lucide="arrow-up-right" style="width: 18px; height: 18px;"></i>
+          </a>
+          <a href="https://github.com/sainishath/ai-second-brain" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" id="btn-hero-github">
+            <i data-lucide="github" style="width: 18px; height: 18px;"></i>
+            Source Code
+          </a>
+        </div>
+      </div>
+      
+      <!-- Interactive D3 Mock/Live Knowledge Graph Panel -->
+      <div class="graph-panel" id="graph">
+        <div class="graph-panel-header">
+          <div class="graph-panel-title">
+            <i data-lucide="git-fork" style="width: 16px; height: 16px; transform: rotate(90deg); color: var(--purple);"></i>
+            Knowledge Visualizer
+          </div>
+          <span class="graph-badge">
+            <i data-lucide="activity" style="width: 12px; height: 12px; animation: pulse 2s infinite;"></i>
+            Live Graph
+          </span>
+        </div>
+        <svg id="d3-mini-graph"></svg>
+        <div class="graph-tooltip" id="mini-graph-tooltip"></div>
+      </div>
+    </section>
+
+    <!-- Vault Metrics Section -->
+    <section class="section-container" id="stats">
+      <div class="section-header">
+        <span class="section-subtitle">Real-time Metrics</span>
+        <h2 class="section-title">Knowledge Vault Overview</h2>
+      </div>
+      
+      <div class="stats-grid">
+        <!-- Metric: Total Notes -->
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-purple">
+            <i data-lucide="file-text"></i>
+          </div>
+          <div class="stat-number" id="stat-notes">0</div>
+          <div class="stat-label">Notes Enrolled</div>
+        </div>
+        
+        <!-- Metric: Total Chunks -->
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-cyan">
+            <i data-lucide="database"></i>
+          </div>
+          <div class="stat-number" id="stat-chunks">0</div>
+          <div class="stat-label">Vector Chunks</div>
+        </div>
+        
+        <!-- Metric: Total Categories -->
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-emerald">
+            <i data-lucide="tag"></i>
+          </div>
+          <div class="stat-number" id="stat-categories">0</div>
+          <div class="stat-label">Active Categories</div>
+        </div>
+        
+        <!-- Metric: Total Links -->
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-purple">
+            <i data-lucide="git-commit"></i>
+          </div>
+          <div class="stat-number" id="stat-links">0</div>
+          <div class="stat-label">Cross Connections</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Agent Pillars Section -->
+    <section class="section-container" id="features" style="padding-top: 0;">
+      <div class="section-header">
+        <span class="section-subtitle">Architecture System</span>
+        <h2 class="section-title">The Three Autonomous Agents</h2>
+      </div>
+      
+      <div class="pillars-grid">
+        <!-- Card: The Archivist -->
+        <div class="pillar-card">
+          <div class="pillar-icon-box" style="background: rgba(139, 92, 246, 0.07); color: var(--purple);">
+            <i data-lucide="archive"></i>
+          </div>
+          <h3 class="pillar-title">The Archivist</h3>
+          <p class="pillar-description">
+            Monitors your local directory structure, auto-registers files, processes frontmatter metadata, and indexes file changes.
+          </p>
+          <ul class="pillar-features">
+            <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Directory auto-sync watch</li>
+            <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> SQLite metadata tracking</li>
+            <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Category structure management</li>
+          </ul>
+        </div>
+        
+        <!-- Card: The Researcher -->
+        <div class="pillar-card">
+          <div class="pillar-icon-box" style="background: rgba(6, 182, 212, 0.07); color: var(--cyan);">
+            <i data-lucide="search"></i>
+          </div>
+          <h3 class="pillar-title">The Researcher</h3>
+          <p class="pillar-description">
+            Generates sentence-level embeddings, builds the vector database, and executes hybrid search algorithms for RAG answering.
+          </p>
+          <ul class="pillar-features">
+            <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> ChromaDB local vector store</li>
+            <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Full-text & vector hybrid search</li>
+            <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Citations & insights rendering</li>
+          </ul>
+        </div>
+        
+        <!-- Card: The Task Master -->
+        <div class="pillar-card">
+          <div class="pillar-icon-box" style="background: rgba(16, 185, 129, 0.07); color: var(--emerald);">
+            <i data-lucide="calendar"></i>
+          </div>
+          <h3 class="pillar-title">The Task Master</h3>
+          <p class="pillar-description">
+            Extracts scheduled tasks, deadlines, and markdown checklists to prepare dynamic briefs and track notes to-do progress.
+          </p>
+          <ul class="pillar-features">
+            <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Automatic checklist extraction</li>
+            <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Daily brief compilations</li>
+            <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Status badge lifecycle tracking</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <div class="footer-container">
+        <div class="footer-text">
+          &copy; 2026 AI Second Brain. Local, Secure, Autonomous.
+        </div>
+        <div class="footer-links">
+          <a href="https://github.com/sainishath/ai-second-brain" target="_blank" rel="noopener noreferrer">
+            <i data-lucide="github" style="width: 18px; height: 18px; display: inline; vertical-align: middle; margin-right: 0.3rem;"></i>
+            Repository
+          </a>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Initialize Lenis Smooth Scrolling
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      direction: 'vertical',
+      gestureDirection: 'vertical',
+      smooth: true,
+      mouseMultiplier: 1,
+      smoothTouch: false,
+      touchMultiplier: 2,
+      infinite: false,
+    });
+
+    function raf(time) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+
+    // ─── Canvas Particle Background Logic ─────────────────────
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    window.addEventListener('resize', () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    });
+
+    const particles = [];
+    const maxParticles = 65;
+    const connectionDist = 110;
+    const mouse = { x: null, y: null, radius: 180 };
+
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+
+    window.addEventListener('mouseleave', () => {
+      mouse.x = null;
+      mouse.y = null;
+    });
+
+    class Particle {
+      constructor() {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.vx = (Math.random() - 0.5) * 0.4;
+        this.vy = (Math.random() - 0.5) * 0.4;
+        this.radius = Math.random() * 2 + 1;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        // Bounce borders
+        if (this.x < 0 || this.x > width) this.vx *= -1;
+        if (this.y < 0 || this.y > height) this.vy *= -1;
+
+        // Mouse attraction (subtle magnetic pull)
+        if (mouse.x !== null) {
+          const dx = mouse.x - this.x;
+          const dy = mouse.y - this.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < mouse.radius) {
+            const force = (mouse.radius - dist) / mouse.radius;
+            this.x += (dx / dist) * force * 0.6;
+            this.y += (dy / dist) * force * 0.6;
+          }
+        }
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(139, 92, 246, 0.4)';
+        ctx.fill();
+      }
+    }
+
+    for (let i = 0; i < maxParticles; i++) {
+      particles.push(new Particle());
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, width, height);
+
+      // Gradient background glow
+      const radialGlow = ctx.createRadialGradient(width/2, height/2, 10, width/2, height/2, Math.max(width, height));
+      radialGlow.addColorStop(0, '#060514');
+      radialGlow.addColorStop(1, '#020204');
+      ctx.fillStyle = radialGlow;
+      ctx.fillRect(0, 0, width, height);
+
+      // Update & Draw Particles
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+
+      // Draw Connections (Synapses)
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < connectionDist) {
+            const alpha = (1 - dist / connectionDist) * 0.15;
+            ctx.strokeStyle = `rgba(139, 92, 246, ${alpha})`;
+            ctx.lineWidth = 0.8;
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      // Draw Glowing Mouse Synapses
+      if (mouse.x !== null) {
+        let targets = [];
+        particles.forEach(p => {
+          const dx = mouse.x - p.x;
+          const dy = mouse.y - p.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < mouse.radius - 20) {
+            targets.push({ p, dist });
+          }
+        });
+        
+        // Connect to nearest 5 particles
+        targets.sort((a,b) => a.dist - b.dist).slice(0, 5).forEach(t => {
+          const alpha = (1 - t.dist / (mouse.radius - 20)) * 0.25;
+          ctx.strokeStyle = `rgba(6, 182, 212, ${alpha})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(mouse.x, mouse.y);
+          ctx.lineTo(t.p.x, t.p.y);
+          ctx.stroke();
+        });
+      }
+
+      requestAnimationFrame(animateParticles);
+    }
+
+    animateParticles();
+
+    // ─── Dynamic Vault Stats Counters ────────────────────────
+    const statsElements = {
+      notes: document.getElementById('stat-notes'),
+      chunks: document.getElementById('stat-chunks'),
+      categories: document.getElementById('stat-categories'),
+      links: document.getElementById('stat-links')
+    };
+
+    function animateValue(obj, endValue, duration) {
+      if (endValue === 0) {
+        obj.innerHTML = "0";
+        return;
+      }
+      let startTimestamp = null;
+      const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        obj.innerHTML = Math.floor(progress * endValue);
+        if (progress < 1) {
+          window.requestAnimationFrame(step);
+        } else {
+          obj.innerHTML = endValue;
+        }
+      };
+      window.requestAnimationFrame(step);
+    }
+
+    // Default mock figures in case backend is offline
+    let statsData = {
+      total_notes: 124,
+      total_chunks: 1420,
+      total_categories: 12,
+      total_links: 284
+    };
+
+    // Load Stats from Backend
+    fetch('/api/overview')
+      .then(res => {
+        if (!res.ok) throw new Error("Backend offline");
+        return res.json();
+      })
+      .then(data => {
+        statsData.total_notes = data.total_notes || 0;
+        statsData.total_chunks = data.total_chunks || 0;
+        statsData.total_categories = data.total_categories || 0;
+        statsData.total_links = data.total_links || 0;
+        triggerStatsAnimation();
+      })
+      .catch(err => {
+        console.warn("Using mock stats fallback because:", err.message);
+        triggerStatsAnimation();
+      });
+
+    function triggerStatsAnimation() {
+      animateValue(statsElements.notes, statsData.total_notes, 1500);
+      animateValue(statsElements.chunks, statsData.total_chunks, 1800);
+      animateValue(statsElements.categories, statsData.total_categories, 1200);
+      animateValue(statsElements.links, statsData.total_links, 1600);
+    }
+
+    // ─── D3.js Network Graph Logic ────────────────────────────
+    const d3Container = document.getElementById('d3-mini-graph');
+    const tooltip = document.getElementById('mini-graph-tooltip');
+    
+    // Preset mock graph nodes/links in case backend lacks links
+    const mockNodes = [
+      { id: "Zettelkasten", group: 1, type: "note" },
+      { id: "PARA Framework", group: 1, type: "note" },
+      { id: "Projects", group: 2, type: "note" },
+      { id: "Areas", group: 2, type: "note" },
+      { id: "Resources", group: 2, type: "note" },
+      { id: "Archives", group: 2, type: "note" },
+      { id: "Daily Brief", group: 3, type: "brief" },
+      { id: "Inbox", group: 4, type: "note" },
+      { id: "Local Database", group: 4, type: "note" }
+    ];
+
+    const mockLinks = [
+      { source: "Zettelkasten", target: "Inbox", type: "wiki" },
+      { source: "PARA Framework", target: "Projects", type: "wiki" },
+      { source: "PARA Framework", target: "Areas", type: "wiki" },
+      { source: "PARA Framework", target: "Resources", type: "wiki" },
+      { source: "PARA Framework", target: "Archives", type: "wiki" },
+      { source: "Daily Brief", target: "Projects", type: "wiki" },
+      { source: "Daily Brief", target: "Zettelkasten", type: "wiki" },
+      { source: "Inbox", target: "Local Database", type: "wiki" }
+    ];
+
+    // Load actual graph data
+    fetch('/api/notes/graph')
+      .then(res => {
+        if (!res.ok) throw new Error("Offline");
+        return res.json();
+      })
+      .then(data => {
+        if (data && data.nodes && data.nodes.length > 2) {
+          renderD3Graph(data.nodes, data.links);
+        } else {
+          renderD3Graph(mockNodes, mockLinks);
+        }
+      })
+      .catch(() => {
+        renderD3Graph(mockNodes, mockLinks);
+      });
+
+    function renderD3Graph(nodes, links) {
+      const svg = d3.select("#d3-mini-graph");
+      svg.selectAll("*").remove();
+
+      let rect = d3Container.getBoundingClientRect();
+      let width = rect.width || 500;
+      let height = rect.height || 400;
+
+      // Container group for pan/zoom
+      const g = svg.append("g");
+
+      // Setup D3 Force Simulation
+      const simulation = d3.forceSimulation(nodes)
+        .force("link", d3.forceLink(links).id(d => d.id).distance(80))
+        .force("charge", d3.forceManyBody().strength(-150))
+        .force("center", d3.forceCenter(width / 2, height / 2))
+        .force("x", d3.forceX(width / 2).strength(0.08))
+        .force("y", d3.forceY(height / 2).strength(0.08));
+
+      // Draw Edges (Links)
+      const link = g.append("g")
+        .attr("stroke", "rgba(255,255,255,0.06)")
+        .attr("stroke-width", 1.5)
+        .selectAll("line")
+        .data(links)
+        .join("line");
+
+      // Draw Node elements
+      const node = g.append("g")
+        .selectAll("g")
+        .data(nodes)
+        .join("g")
+        .call(d3.drag()
+          .on("start", dragstarted)
+          .on("drag", dragged)
+          .on("end", dragended)
+        );
+
+      // Main Node Circles (neon styles)
+      node.append("circle")
+        .attr("r", d => d.type === 'brief' ? 8 : 10)
+        .attr("fill", d => d.type === 'brief' ? 'var(--cyan)' : 'var(--purple)')
+        .attr("stroke", "#030307")
+        .attr("stroke-width", 2)
+        .style("filter", d => d.type === 'brief' ? 'drop-shadow(0 0 8px var(--cyan-glow))' : 'drop-shadow(0 0 8px var(--purple-glow))')
+        .style("cursor", "pointer");
+
+      // Hover glow circle animation
+      node.append("circle")
+        .attr("r", 15)
+        .attr("fill", "transparent")
+        .attr("stroke", "transparent")
+        .attr("stroke-width", 1)
+        .on("mouseenter", function(event, d) {
+          d3.select(this)
+            .attr("stroke", d.type === 'brief' ? 'rgba(6, 182, 212, 0.4)' : 'rgba(139, 92, 246, 0.4)')
+            .attr("r", 18);
+            
+          // Fade others
+          node.style("opacity", o => (o.id === d.id || isConnected(d, o)) ? 1.0 : 0.2);
+          link.style("stroke", l => (l.source.id === d.id || l.target.id === d.id) ? 'rgba(139, 92, 246, 0.5)' : 'rgba(255,255,255,0.02)');
+
+          // Tooltip show
+          tooltip.style.opacity = 1;
+          tooltip.innerHTML = `<strong>${d.id}</strong><span style="display:block;font-size:0.7rem;color:var(--text-muted)">Type: ${d.type || 'note'}</span>`;
+        })
+        .on("mouseleave", function(event, d) {
+          d3.select(this)
+            .attr("stroke", "transparent")
+            .attr("r", 15);
+            
+          node.style("opacity", 1.0);
+          link.style("stroke", "rgba(255,255,255,0.06)");
+          tooltip.style.opacity = 0;
+        });
+
+      // Node Labels (Small text)
+      node.append("text")
+        .text(d => d.id)
+        .attr("x", 14)
+        .attr("y", 4)
+        .attr("fill", "var(--text-muted)")
+        .attr("font-family", "var(--font-title)")
+        .attr("font-size", "0.75rem")
+        .attr("font-weight", "500")
+        .style("pointer-events", "none")
+        .style("text-shadow", "0 2px 4px rgba(0,0,0,0.8)");
+
+      // Link connectivity helper
+      const linkedByIndex = {};
+      links.forEach(d => {
+        linkedByIndex[`${d.source.id},${d.target.id}`] = 1;
+        linkedByIndex[`${d.target.id},${d.source.id}`] = 1;
+      });
+
+      function isConnected(a, b) {
+        return linkedByIndex[`${a.id},${b.id}`] || a.id === b.id;
+      }
+
+      // Simulation loop updates
+      simulation.on("tick", () => {
+        link
+          .attr("x1", d => d.source.x)
+          .attr("y1", d => d.source.y)
+          .attr("x2", d => d.target.x)
+          .attr("y2", d => d.target.y);
+
+        node
+          .attr("transform", d => `translate(${d.x},${d.y})`);
+      });
+
+      // Drag mechanics
+      function dragstarted(event, d) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      }
+
+      function dragged(event, d) {
+        d.fx = event.x;
+        d.fy = event.y;
+      }
+
+      function dragended(event, d) {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+      }
+
+      // Keep simulation alive with gentle floating force
+      setInterval(() => {
+        simulation.alpha(0.01).restart();
+      }, 5000);
+
+      // Handle window resizing
+      window.addEventListener('resize', () => {
+        let newRect = d3Container.getBoundingClientRect();
+        let newW = newRect.width || 500;
+        let newH = newRect.height || 400;
+        simulation.force("center", d3.forceCenter(newW / 2, newH / 2));
+        simulation.alpha(0.3).restart();
+      });
+    }
+  </script>
+</body>
+</html>

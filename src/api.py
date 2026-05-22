@@ -270,10 +270,20 @@ def get_index_categories() -> dict:
 
 @app.get("/")
 def root():
+    landing_path = _ROOT_DIR / "src" / "landing.html"
+    if landing_path.exists():
+        return HTMLResponse(landing_path.read_text(encoding="utf-8"))
     dashboard_path = _ROOT_DIR / "src" / "dashboard.html"
     if dashboard_path.exists():
         return HTMLResponse(dashboard_path.read_text(encoding="utf-8"))
     return {"name": "AI Second Brain", "status": "running"}
+
+@app.get("/dashboard")
+def dashboard():
+    dashboard_path = _ROOT_DIR / "src" / "dashboard.html"
+    if dashboard_path.exists():
+        return HTMLResponse(dashboard_path.read_text(encoding="utf-8"))
+    return HTMLResponse("<h1>Dashboard Not Found</h1>", status_code=404)
 
 @app.get("/api/overview")
 async def overview_endpoint():
