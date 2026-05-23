@@ -1114,61 +1114,32 @@
     window.addEventListener('resize', () => {
       width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
+      draw3DBrain(brainState.rotationY, brainState.rotationX);
     });
 
-    const totalFrames = 300;
-    const images = [];
-    let loadedCount = 0;
-    let failedCount = 0;
-    let useFallback = false;
-    let framesPreloaded = false;
-    const frameIndexObj = { current: 0, target: 0 };
+    if (video) {
+      const handleVideoSuccess = () => {
+        video.style.display = 'block';
+        canvas.style.display = 'none';
+      };
 
-    function preloadFrames() {
-      for (let i = 1; i <= totalFrames; i++) {
-        const img = new Image();
-        const paddedNum = String(i).padStart(3, '0');
-        img.src = `/static/frames/${paddedNum}.jpg`;
-        img.onload = () => {
-          loadedCount++;
-          if (loadedCount + failedCount === totalFrames) {
-            onFramesLoaded();
-          }
-        };
-        img.onerror = () => {
-          failedCount++;
-          if (loadedCount + failedCount === totalFrames) {
-            onFramesLoaded();
-          }
-        };
-        images.push(img);
-      }
-    }
-
-    function onFramesLoaded() {
-      if (failedCount > totalFrames * 0.5) {
-        console.warn('Frames preloading failed. Falling back to video/particle brain.');
-        useFallback = true;
-        if (video) {
-          video.play().then(() => {
-            video.style.display = 'block';
-            canvas.style.display = 'none';
-          }).catch(() => {
-            video.style.display = 'none';
-            canvas.style.display = 'block';
-          });
-        }
+      if (video.readyState >= 3) {
+        handleVideoSuccess();
       } else {
-        framesPreloaded = true;
-        if (video) {
-          video.pause();
-          video.style.display = 'none';
-        }
-        canvas.style.display = 'block';
+        video.addEventListener('canplaythrough', handleVideoSuccess);
       }
-    }
 
-    preloadFrames();
+      video.addEventListener('error', () => {
+        console.warn('Hero video failed to load, falling back to particle brain canvas.');
+        video.style.display = 'none';
+        canvas.style.display = 'block';
+      });
+      video.play().catch(err => {
+        console.warn('Video autoplay failed:', err.message);
+        video.style.display = 'none';
+        canvas.style.display = 'block';
+      });
+    }
 
     // Generate mathematical 3D brain point cloud
     const points = [];
@@ -1329,48 +1300,7 @@
     }
 
     const brainState = { rotationY: 0, rotationX: 0.25 };
-
-    function animationLoop() {
-      // Interpolate current frame index for inertia
-      frameIndexObj.current += (frameIndexObj.target - frameIndexObj.current) * 0.12;
-
-      if (framesPreloaded && !useFallback) {
-        const activeFrame = Math.round(frameIndexObj.current);
-        const img = images[activeFrame];
-
-        if (img && img.complete && img.naturalWidth !== 0) {
-          ctx.clearRect(0, 0, width, height);
-
-          // Image 'cover' fit calculations
-          const imgRatio = img.naturalWidth / img.naturalHeight;
-          const canvasRatio = width / height;
-          let drawWidth, drawHeight, xOffset, yOffset;
-
-          if (canvasRatio > imgRatio) {
-            drawWidth = width;
-            drawHeight = width / imgRatio;
-            xOffset = 0;
-            yOffset = (height - drawHeight) / 2;
-          } else {
-            drawWidth = height * imgRatio;
-            drawHeight = height;
-            xOffset = (width - drawWidth) / 2;
-            yOffset = 0;
-          }
-
-          ctx.drawImage(img, xOffset, yOffset, drawWidth, drawHeight);
-        } else {
-          draw3DBrain(brainState.rotationY, brainState.rotationX);
-        }
-      } else {
-        if (canvas.style.display !== 'none') {
-          draw3DBrain(brainState.rotationY, brainState.rotationX);
-        }
-      }
-
-      requestAnimationFrame(animationLoop);
-    }
-    requestAnimationFrame(animationLoop);
+    draw3DBrain(brainState.rotationY, brainState.rotationX);
 
     // ─── GSAP ScrollTrigger Sequence ──────────────────────────
     gsap.registerPlugin(ScrollTrigger);
@@ -1383,8 +1313,8 @@
         start: "top top",
         end: "bottom bottom",
         scrub: 1.5,
-        onUpdate: (self) => {
-          frameIndexObj.target = self.progress * (totalFrames - 1);
+        onUpdate: () => {
+          draw3DBrain(brainState.rotationY, brainState.rotationX);
         }
       }
     });
