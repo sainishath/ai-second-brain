@@ -8,8 +8,6 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.136-009688?style=flat&logo=fastapi&logoColor=white)
 ![ChromaDB](https://img.shields.io/badge/ChromaDB-Vector_DB-FF6B35?style=flat)
 ![Ollama](https://img.shields.io/badge/Ollama-Local_LLM-black?style=flat)
-![License](https://img.shields.io/badge/License-MIT-green?style=flat)
-
 ---
 
 ## ✨ Real-World Showcase: User Note Example
@@ -213,4 +211,4 @@ Use [Research: topic] to flag facts for the Researcher agent.
 
 ## License
 
-MIT
+Proprietary / All Rights Reserved.

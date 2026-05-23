@@ -12,7 +12,8 @@ import {
   RefreshCw,
   FolderOpen,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  Globe
 } from 'lucide-react';
 import CanvasScroll from './CanvasScroll';
 
@@ -39,6 +40,12 @@ function App() {
     { name: 'daily_brief.md', category: 'Archives', date: '1 hour ago' },
     { name: 'embedding_vectors.md', category: 'Resources', date: '3 hours ago' },
   ]);
+  const [chromaNotes, setChromaNotes] = useState([
+    { doc_id: 'chroma_1', title: 'Machine Learning Basics', source: 'ml_basics.pdf', source_type: 'pdf', chunks: 14 },
+    { doc_id: 'chroma_2', title: 'React Performance Guide', source: 'https://react.dev', source_type: 'url', chunks: 8 },
+    { doc_id: 'chroma_3', title: 'Workspace Log Draft', source: 'workspace_log.txt', source_type: 'text', chunks: 4 },
+  ]);
+  const [activeTab, setActiveTab] = useState('local');
 
   // Ping API and fetch live metrics
   useEffect(() => {
@@ -60,13 +67,21 @@ function App() {
         if (notesRes.ok) {
           const notesData = await notesRes.json();
           // Map backend notes response structure
-          if (Array.isArray(notesData)) {
-            const formatted = notesData.slice(0, 5).map(note => ({
-              name: note.filepath || note.name || 'untitled.md',
-              category: note.category || 'Raw',
-              date: note.updated_at || 'Synced'
+          if (notesData && Array.isArray(notesData.notes)) {
+            const formatted = notesData.notes.slice(0, 10).map(note => ({
+              name: note.filename || note.name || 'untitled.md',
+              category: note.type || 'Note',
+              date: note.created || 'Synced'
             }));
             setNotes(formatted);
+          }
+        }
+
+        const chromaRes = await fetch('/api/chroma/notes');
+        if (chromaRes.ok) {
+          const chromaData = await chromaRes.json();
+          if (chromaData && Array.isArray(chromaData.chroma_notes)) {
+            setChromaNotes(chromaData.chroma_notes);
           }
         }
       } catch (err) {
@@ -324,28 +339,92 @@ Your Second Brain contains detailed archives on Zettelkasten and PARA frameworks
                 </p>
               </div>
 
-              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
-                {notes.map((note, index) => (
-                  <div 
-                    key={index}
-                    className="p-3.5 glass-panel rounded-xl flex items-center justify-between hover:bg-white/5 transition-all group cursor-pointer border-l-2 hover:border-l-purple"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
-                        <FileText className="w-4 h-4 text-purple" />
+              {/* Tab Navigation */}
+              <div className="flex gap-2 border-b border-white/5 pb-2">
+                <button
+                  onClick={() => setActiveTab('local')}
+                  className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
+                    activeTab === 'local'
+                      ? 'bg-purple/20 text-purple border border-purple/30'
+                      : 'text-text-muted hover:text-white border border-transparent'
+                  }`}
+                >
+                  Local Notes
+                </button>
+                <button
+                  onClick={() => setActiveTab('chroma')}
+                  className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
+                    activeTab === 'chroma'
+                      ? 'bg-cyan/20 text-cyan border border-cyan/30'
+                      : 'text-text-muted hover:text-white border border-transparent'
+                  }`}
+                >
+                  Vector Store (ChromaDB)
+                </button>
+              </div>
+
+              <div className="space-y-2 max-h-[240px] overflow-y-auto pr-2">
+                {activeTab === 'local' ? (
+                  notes.map((note, index) => (
+                    <div 
+                      key={index}
+                      className="p-3.5 glass-panel rounded-xl flex items-center justify-between hover:bg-white/5 transition-all group cursor-pointer border-l-2 hover:border-l-purple"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
+                          <FileText className="w-4 h-4 text-purple" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-white group-hover:text-purple transition-colors truncate max-w-[200px]" title={note.name}>
+                            {note.name.split('/').pop()}
+                          </span>
+                          <span className="text-[10px] text-text-muted mt-0.5">{note.date}</span>
+                        </div>
                       </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium text-white group-hover:text-purple transition-colors truncate max-w-[200px]">
-                          {note.name.split('/').pop()}
-                        </span>
-                        <span className="text-[10px] text-text-muted mt-0.5">{note.date}</span>
-                      </div>
+                      <span className="text-[10px] font-medium bg-white/5 text-text-muted border border-white/5 px-2.5 py-1 rounded-full uppercase">
+                        {note.category}
+                      </span>
                     </div>
-                    <span className="text-[10px] font-medium bg-white/5 text-text-muted border border-white/5 px-2.5 py-1 rounded-full uppercase">
-                      {note.category}
-                    </span>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  chromaNotes.map((note, index) => {
+                    const isUrl = note.source_type?.toLowerCase() === 'url' || note.source_type?.toLowerCase() === 'web';
+                    const isPdf = note.source_type?.toLowerCase() === 'pdf';
+                    const IconComponent = isUrl ? Globe : (isPdf ? FileText : Database);
+                    const colorClass = isUrl ? 'text-cyan' : (isPdf ? 'text-purple' : 'text-emerald');
+                    const borderClass = isUrl ? 'hover:border-l-cyan' : (isPdf ? 'hover:border-l-purple' : 'hover:border-l-emerald');
+                    
+                    return (
+                      <div 
+                        key={note.doc_id || index}
+                        className={`p-3.5 glass-panel rounded-xl flex items-center justify-between hover:bg-white/5 transition-all group cursor-pointer border-l-2 ${borderClass}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
+                            <IconComponent className={`w-4 h-4 ${colorClass}`} />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className={`text-sm font-medium text-white group-hover:${colorClass} transition-colors truncate max-w-[200px]`} title={note.title}>
+                              {note.title}
+                            </span>
+                            <span className="text-[10px] text-text-muted mt-0.5 truncate max-w-[200px]" title={note.source}>
+                              {note.source}
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-medium bg-white/5 text-text-muted border border-white/5 px-2.5 py-1 rounded-full uppercase">
+                          {note.chunks} {note.chunks === 1 ? 'chunk' : 'chunks'}
+                        </span>
+                      </div>
+                    );
+                  })
+                )}
+                {activeTab === 'local' && notes.length === 0 && (
+                  <div className="text-center py-6 text-xs text-text-muted">No local notes found.</div>
+                )}
+                {activeTab === 'chroma' && chromaNotes.length === 0 && (
+                  <div className="text-center py-6 text-xs text-text-muted">No vector documents found in ChromaDB.</div>
+                )}
               </div>
             </div>
 

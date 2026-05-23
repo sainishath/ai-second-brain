@@ -29,6 +29,7 @@ _executor = ThreadPoolExecutor(max_workers=4)
 from fastapi import FastAPI, HTTPException, BackgroundTasks, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional, List
 import uvicorn
@@ -110,6 +111,7 @@ for d in [_NOTES_DIR, _DRIVE_DIR, _BRIEFS_DIR, _RAW_DIR]:
 # ─── App ──────────────────────────────────────────────────────
 app = FastAPI(title="AI Second Brain", version="2.1.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.mount("/static", StaticFiles(directory=str(_ROOT_DIR / "static")), name="static")
 
 retriever = HybridRetriever()
 generator = get_generator()
@@ -314,6 +316,36 @@ async def notes_endpoint():
     loop = asyncio.get_event_loop()
     notes = await loop.run_in_executor(_executor, get_all_notes)
     return {"notes": notes}
+
+@app.get("/api/chroma/notes")
+async def chroma_notes_endpoint():
+    loop = asyncio.get_event_loop()
+    def _get_chroma_notes():
+        data = retriever.collection.get(include=["metadatas"])
+        metadatas = data.get("metadatas", [])
+        docs = {}
+        for meta in metadatas:
+            if not meta:
+                continue
+            doc_id = meta.get("doc_id")
+            if not doc_id:
+                continue
+            if doc_id not in docs:
+                docs[doc_id] = {
+                    "doc_id": doc_id,
+                    "title": meta.get("title") or meta.get("source", "Untitled Document"),
+                    "source": meta.get("source", ""),
+                    "source_type": meta.get("source_type") or "text",
+                    "chunks": 0,
+                }
+            docs[doc_id]["chunks"] += 1
+        return list(docs.values())
+    
+    try:
+        results = await loop.run_in_executor(_executor, _get_chroma_notes)
+        return {"chroma_notes": results}
+    except Exception as e:
+        return {"chroma_notes": [], "error": str(e)}
 
 def sanitize_import_filename(title: str) -> str:
     # Strip characters outside [a-zA-Z0-9_-], replace spaces with _

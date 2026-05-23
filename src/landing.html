@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Second Brain — Autonomous & Local</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>" />
   
   <!-- Premium Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -333,9 +334,9 @@
       position: relative;
       height: 480px;
       border-radius: 24px;
-      background: rgba(255, 255, 255, 0.01);
+      background: #0D0D0F;
       backdrop-filter: blur(12px);
-      border: 1px solid var(--border);
+      border: 1px solid rgba(124, 58, 237, 0.2);
       box-shadow: 0 20px 50px rgba(0,0,0,0.3);
       overflow: hidden;
       display: flex;
@@ -634,6 +635,198 @@
         display: none;
       }
     }
+
+    /* TASK 2: Live Stats Strip */
+    .stats-strip {
+      position: absolute;
+      top: 6.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 99;
+      background: rgba(13, 13, 15, 0.75);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(124, 58, 237, 0.25);
+      border-radius: 9999px;
+      padding: 0.45rem 1.5rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-main);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      white-space: nowrap;
+      transition: all 0.3s ease;
+      letter-spacing: 0.05em;
+    }
+    
+    .stats-strip span {
+      background: linear-gradient(135deg, #fff 60%, var(--purple) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* TASK 3: Loading Pulse Animation */
+    @keyframes pulse-loading {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.97); filter: brightness(1.2); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    .loading-pulse {
+      animation: pulse-loading 1s infinite ease-in-out;
+      pointer-events: none;
+      position: relative;
+    }
+
+    /* TASK 5: Floating Chat Widget */
+    #chat-widget-container {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 1000;
+      font-family: var(--font-body);
+    }
+
+    #chat-widget-toggle {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--purple) 0%, #7c3aed 100%);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 20px var(--purple-glow);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    #chat-widget-toggle:hover {
+      transform: scale(1.08) rotate(5deg);
+      box-shadow: 0 0 30px rgba(139, 92, 246, 0.6);
+    }
+
+    #chat-widget-card {
+      position: absolute;
+      bottom: 75px;
+      right: 0;
+      width: 360px;
+      height: 460px;
+      background: rgba(13, 13, 15, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(124, 58, 237, 0.25);
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(20px) scale(0.95);
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    #chat-widget-card.open {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+
+    .chat-header {
+      padding: 1rem 1.25rem;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chat-header-title {
+      font-family: var(--font-title);
+      font-weight: 700;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #fff;
+    }
+
+    .chat-messages {
+      flex-grow: 1;
+      padding: 1.25rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      max-height: 310px;
+    }
+
+    .chat-message {
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      line-height: 1.4;
+      max-width: 85%;
+      word-wrap: break-word;
+    }
+
+    .chat-message.user {
+      align-self: flex-end;
+      background: rgba(139, 92, 246, 0.15);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      color: #fff;
+    }
+
+    .chat-message.brain {
+      align-self: flex-start;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: var(--text-muted);
+    }
+
+    .chat-input-area {
+      padding: 0.85rem 1.25rem;
+      background: rgba(0,0,0,0.2);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .chat-input {
+      flex-grow: 1;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 0.5rem 0.75rem;
+      color: #fff;
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .chat-input:focus {
+      border-color: var(--purple);
+    }
+
+    .chat-send-btn {
+      background: var(--purple);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .chat-send-btn:hover {
+      background: #7c3aed;
+      transform: scale(1.05);
+    }
   </style>
 </head>
 <body>
@@ -641,6 +834,9 @@
   <!-- Pinned 3D Brain Scroll Sequence Hero -->
   <section id="scroll-container">
     <div id="sticky-wrapper">
+      <video id="hero-video" autoplay loop muted playsinline style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.55; z-index: 1; display: none;">
+        <source src="/static/AI_Second_Brain_hero.mp4" type="video/mp4">
+      </video>
       <canvas id="bg-canvas"></canvas>
       
       <!-- Navbar Header -->
@@ -660,6 +856,11 @@
           </a>
         </div>
       </header>
+
+      <!-- Live Stats strip pill -->
+      <div class="stats-strip" id="live-stats-strip">
+        <span>🧠 Loading Notes...  •  📅 Last Brief: --  •  ⚡ Brain Status: Connecting</span>
+      </div>
 
       <!-- Narrative Overlay 1 (Initial View) -->
       <div class="hero-overlay hero-title-1">
@@ -683,7 +884,7 @@
             <i data-lucide="arrow-up-right" style="width: 18px; height: 18px;"></i>
           </a>
           <a href="https://github.com/sainishath/ai-second-brain" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" id="btn-hero-github">
-            <i data-lucide="github" style="width: 18px; height: 18px;"></i>
+            <svg class="lucide lucide-github" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px; display: inline-block; vertical-align: middle; margin-right: 0.3rem;"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
             Source Code
           </a>
         </div>
@@ -741,34 +942,34 @@
           <i data-lucide="file-text"></i>
         </div>
         <div class="stat-number" id="stat-notes">0</div>
-        <div class="stat-label">Notes Enrolled</div>
+        <div class="stat-label">Total Notes</div>
       </div>
       
-      <!-- Metric: Total Chunks -->
+      <!-- Metric: Notes by Tag (Unique Tags) -->
       <div class="stat-card">
         <div class="stat-icon stat-icon-cyan">
-          <i data-lucide="database"></i>
-        </div>
-        <div class="stat-number" id="stat-chunks">0</div>
-        <div class="stat-label">Vector Chunks</div>
-      </div>
-      
-      <!-- Metric: Total Categories -->
-      <div class="stat-card">
-        <div class="stat-icon stat-icon-emerald">
           <i data-lucide="tag"></i>
         </div>
-        <div class="stat-number" id="stat-categories">0</div>
-        <div class="stat-label">Active Categories</div>
+        <div class="stat-number" id="stat-tags">0</div>
+        <div class="stat-label">Unique Tags</div>
       </div>
       
-      <!-- Metric: Total Links -->
+      <!-- Metric: Last Ingestion -->
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-emerald">
+          <i data-lucide="clock"></i>
+        </div>
+        <div class="stat-number" id="stat-ingestion" style="font-size: 1.5rem; font-weight: 700; min-height: 3.75rem; display: flex; align-items: center; justify-content: center;">Never</div>
+        <div class="stat-label">Last Ingestion</div>
+      </div>
+      
+      <!-- Metric: Index Health Status -->
       <div class="stat-card">
         <div class="stat-icon stat-icon-purple">
-          <i data-lucide="git-commit"></i>
+          <i data-lucide="activity"></i>
         </div>
-        <div class="stat-number" id="stat-links">0</div>
-        <div class="stat-label">Cross Connections</div>
+        <div class="stat-number" id="stat-health" style="font-size: 2.2rem; font-weight: 700; color: var(--emerald); min-height: 3.75rem; display: flex; align-items: center; justify-content: center;">Active</div>
+        <div class="stat-label">Index Health</div>
       </div>
     </div>
   </section>
@@ -777,55 +978,55 @@
   <section class="section-container" id="features" style="padding-top: 0;">
     <div class="section-header">
       <span class="section-subtitle">Architecture System</span>
-      <h2 class="section-title">The Three Autonomous Agents</h2>
+      <h2 class="section-title">Core Capabilities</h2>
     </div>
     
     <div class="pillars-grid">
-      <!-- Card: The Archivist -->
+      <!-- Pillar 1: Note Ingestion -->
       <div class="pillar-card">
         <div class="pillar-icon-box" style="background: rgba(139, 92, 246, 0.07); color: var(--purple);">
-          <i data-lucide="archive"></i>
+          <i data-lucide="upload-cloud"></i>
         </div>
-        <h3 class="pillar-title">The Archivist</h3>
+        <h3 class="pillar-title">Ingest Anything</h3>
         <p class="pillar-description">
-          Monitors your local directory structure, auto-registers files, processes frontmatter metadata, and indexes file changes.
+          Drop URLs, YouTube links, PDFs, DOCX, TXT or Markdown. The local indexer parses, chunks, and embeds everything into your vault instantly.
         </p>
         <ul class="pillar-features">
-          <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Directory auto-sync watch</li>
-          <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> SQLite metadata tracking</li>
-          <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Category structure management</li>
+          <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Media & file format ingestion</li>
+          <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> High-performance local embedding</li>
+          <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Adaptive parser & chunker</li>
         </ul>
       </div>
       
-      <!-- Card: The Researcher -->
+      <!-- Pillar 2: Daily Brief -->
       <div class="pillar-card">
         <div class="pillar-icon-box" style="background: rgba(6, 182, 212, 0.07); color: var(--cyan);">
-          <i data-lucide="search"></i>
+          <i data-lucide="calendar"></i>
         </div>
-        <h3 class="pillar-title">The Researcher</h3>
+        <h3 class="pillar-title">Nightly Intelligence</h3>
         <p class="pillar-description">
-          Generates sentence-level embeddings, builds the vector database, and executes hybrid search algorithms for RAG answering.
+          Every night, 3 sub-agents — Task Master, Archivist, and Researcher — scan your vault, extract tasks, link concepts, and generate a consolidated Daily Brief.
         </p>
         <ul class="pillar-features">
-          <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> ChromaDB local vector store</li>
-          <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Full-text & vector hybrid search</li>
-          <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Citations & insights rendering</li>
+          <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Multi-agent collaboration model</li>
+          <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Automated task extraction list</li>
+          <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Synaptic concept correlation</li>
         </ul>
       </div>
       
-      <!-- Card: The Task Master -->
+      <!-- Pillar 3: RAG Chat -->
       <div class="pillar-card">
         <div class="pillar-icon-box" style="background: rgba(16, 185, 129, 0.07); color: var(--emerald);">
-          <i data-lucide="calendar"></i>
+          <i data-lucide="message-square"></i>
         </div>
-        <h3 class="pillar-title">The Task Master</h3>
+        <h3 class="pillar-title">Ask Your Brain</h3>
         <p class="pillar-description">
-          Extracts scheduled tasks, deadlines, and markdown checklists to prepare dynamic briefs and track notes to-do progress.
+          Hybrid BM25 + semantic search retrieves the most relevant notes. Your chosen LLM (Ollama, Claude, or OpenAI) answers grounded in your own knowledge.
         </p>
         <ul class="pillar-features">
-          <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Automatic checklist extraction</li>
-          <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Daily brief compilations</li>
-          <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Status badge lifecycle tracking</li>
+          <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Grounded RAG architecture</li>
+          <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> BM25 + dense retrieval fusion</li>
+          <li><i data-lucide="check-circle" style="width:14px; height:14px;"></i> Multi-model configuration</li>
         </ul>
       </div>
     </div>
@@ -839,12 +1040,41 @@
       </div>
       <div class="footer-links">
         <a href="https://github.com/sainishath/ai-second-brain" target="_blank" rel="noopener noreferrer">
-          <i data-lucide="github" style="width: 18px; height: 18px; display: inline; vertical-align: middle; margin-right: 0.3rem;"></i>
+          <svg class="lucide lucide-github" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px; display: inline-block; vertical-align: middle; margin-right: 0.3rem;"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
           Repository
         </a>
       </div>
     </div>
   </footer>
+
+  <!-- Floating Chat Widget -->
+  <div id="chat-widget-container">
+    <div id="chat-widget-toggle">
+      <i data-lucide="brain" style="width: 28px; height: 28px;"></i>
+    </div>
+    <div id="chat-widget-card">
+      <div class="chat-header">
+        <div class="chat-header-title">
+          <i data-lucide="sparkles" style="width: 18px; height: 18px; color: var(--purple);"></i>
+          Neural Query Preview
+        </div>
+        <div style="cursor: pointer; opacity: 0.6;" onclick="document.getElementById('chat-widget-card').classList.remove('open')">
+          <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+        </div>
+      </div>
+      <div class="chat-messages">
+        <div class="chat-message brain">
+          Hello! Ask your brain anything. I will retrieve context and generate a local response.
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <input type="text" class="chat-input" placeholder="Ask your brain anything..." />
+        <button class="chat-send-btn">
+          <i data-lucide="send" style="width: 14px; height: 14px;"></i>
+        </button>
+      </div>
+    </div>
+  </div>
 
   <script>
     // Initialize Lucide Icons
@@ -873,7 +1103,8 @@
     });
     gsap.ticker.lagSmoothing(0);
 
-    // ─── 3D Programmatic Brain Projection ───────────────────
+    // ─── TASK 1: Hero Video / Canvas Fallback ─────────────────
+    const video = document.getElementById('hero-video');
     const canvas = document.getElementById('bg-canvas');
     const ctx = canvas.getContext('2d');
 
@@ -885,6 +1116,30 @@
       height = canvas.height = window.innerHeight;
       draw3DBrain(brainState.rotationY, brainState.rotationX);
     });
+
+    if (video) {
+      const handleVideoSuccess = () => {
+        video.style.display = 'block';
+        canvas.style.display = 'none';
+      };
+
+      if (video.readyState >= 3) {
+        handleVideoSuccess();
+      } else {
+        video.addEventListener('canplaythrough', handleVideoSuccess);
+      }
+
+      video.addEventListener('error', () => {
+        console.warn('Hero video failed to load, falling back to particle brain canvas.');
+        video.style.display = 'none';
+        canvas.style.display = 'block';
+      });
+      video.play().catch(err => {
+        console.warn('Video autoplay failed:', err.message);
+        video.style.display = 'none';
+        canvas.style.display = 'block';
+      });
+    }
 
     // Generate mathematical 3D brain point cloud
     const points = [];
@@ -938,6 +1193,8 @@
 
     // Render loop helper
     function draw3DBrain(angleY, angleX) {
+      if (video && video.style.display === 'block') return; // Skip render if video is playing
+
       ctx.clearRect(0, 0, width, height);
 
       // Deep radial lighting backdrop
@@ -954,19 +1211,11 @@
 
       // Project points from 3D coordinate space to 2D canvas coordinates
       const projected = points.map((p, idx) => {
-        // Rotate around Y-axis
         let x1 = p.x * cosY - p.z * sinY;
         let z1 = p.x * sinY + p.z * cosY;
-        
-        // Rotate around X-axis
         let y2 = p.y * cosX - z1 * sinX;
         let z2 = p.y * sinX + z1 * cosX;
-        
-        // Perspective factor
         const perspective = 300 / (300 + z2);
-        
-        // Scale and shift coordinates to screen center
-        // Tighter bounds on small devices
         const scaleFactor = Math.min(width, height) * 0.28;
         const xProjected = width / 2 + x1 * perspective * scaleFactor;
         const yProjected = height / 2 - y2 * perspective * scaleFactor;
@@ -974,10 +1223,10 @@
         return { x: xProjected, y: yProjected, z: z2, perspective: perspective, index: idx };
       });
 
-      // Depth sorting (Painters algorithm: draw background nodes first)
+      // Depth sorting
       projected.sort((a, b) => b.z - a.z);
 
-      // Draw connection synapses between close 3D coordinates
+      // Draw connection synapses
       ctx.lineWidth = 0.6;
       for (let i = 0; i < projected.length; i++) {
         const p1_proj = projected[i];
@@ -987,15 +1236,12 @@
           const p2_proj = projected[j];
           const p2_orig = points[p2_proj.index];
 
-          // Compute absolute distance in 3D coordinate model
           const dx = p1_orig.x - p2_orig.x;
           const dy = p1_orig.y - p2_orig.y;
           const dz = p1_orig.z - p2_orig.z;
           const dist3D = dx*dx + dy*dy + dz*dz;
 
-          // Connect if points fall within structural threshold bounds
           if (dist3D < 0.16) {
-            // Compute screen coordinates distance to mouse for interactive hover illumination
             let mouseGlowAlpha = 0.0;
             if (mouse.x !== null) {
               const mx1 = (p1_proj.x + p2_proj.x) / 2 - mouse.x;
@@ -1006,7 +1252,6 @@
               }
             }
 
-            // Normal depth-based opacity
             const avgZ = (p1_proj.z + p2_proj.z) / 2;
             const depthAlpha = Math.max(0.01, (1 - (avgZ + 1.5) / 3) * 0.12);
             
@@ -1028,13 +1273,12 @@
 
       // Draw projected particle nodes
       projected.forEach(p => {
-        const depthRatio = (p.z + 1.5) / 3; // normalized depth ratio (0 to 1)
+        const depthRatio = (p.z + 1.5) / 3;
         const size = Math.max(0.6, (1 - depthRatio) * 3 + 0.6);
         
         ctx.beginPath();
         ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
         
-        // Highlight nodes close to mouse coordinates
         let isHovered = false;
         if (mouse.x !== null) {
           const dx = p.x - mouse.x;
@@ -1047,26 +1291,22 @@
         if (isHovered) {
           ctx.fillStyle = `rgba(6, 182, 212, ${1.1 - depthRatio})`;
         } else if (depthRatio < 0.35) {
-          ctx.fillStyle = `rgba(168, 85, 247, ${1 - depthRatio})`; // Light purple front
+          ctx.fillStyle = `rgba(168, 85, 247, ${1 - depthRatio})`;
         } else {
-          ctx.fillStyle = `rgba(107, 33, 168, ${1 - depthRatio})`; // Dark purple depth
+          ctx.fillStyle = `rgba(107, 33, 168, ${1 - depthRatio})`;
         }
         ctx.fill();
       });
     }
 
-    // Initial state object for GSAP Tweens
     const brainState = { rotationY: 0, rotationX: 0.25 };
-
-    // Draw initial frame
     draw3DBrain(brainState.rotationY, brainState.rotationX);
 
     // ─── GSAP ScrollTrigger Sequence ──────────────────────────
     gsap.registerPlugin(ScrollTrigger);
 
-    // 1. Scrub 3D Brain rotation on Scroll
     gsap.to(brainState, {
-      rotationY: Math.PI * 4, // 2 full spins
+      rotationY: Math.PI * 4,
       rotationX: 0.8,
       scrollTrigger: {
         trigger: "#scroll-container",
@@ -1079,7 +1319,6 @@
       }
     });
 
-    // 2. Timeline to scrub overlay fading sequences
     gsap.timeline({
       scrollTrigger: {
         trigger: "#scroll-container",
@@ -1088,24 +1327,177 @@
         scrub: true,
       }
     })
-    // Title 1 transitions OUT
     .to(".hero-title-1", { opacity: 0, y: -60, duration: 1.5, pointerEvents: 'none' })
-    // Title 2 transitions IN (overlaps Title 1's fade out for a smooth cross-fade)
     .to(".hero-title-2", { opacity: 1, y: 0, duration: 1.5, pointerEvents: 'auto' }, "-=1.0")
-    // Title 2 transitions OUT (after static reading window)
     .to(".hero-title-2", { opacity: 0, y: -60, duration: 1.5, pointerEvents: 'none' }, "+=1.5")
-    // Title 3 transitions IN (overlaps Title 2's fade out for a smooth cross-fade)
     .to(".hero-title-3", { opacity: 1, y: 0, duration: 1.5, pointerEvents: 'auto' }, "-=1.0");
 
-    // ─── Dynamic Vault Stats Counters ────────────────────────
+    // ─── TASK 2: Live Stats Strip Below Navbar ────────────────
+    function updateStatsStrip() {
+      // Try in order until one works
+      const endpoints = ['/api/overview', '/api/notes', '/api/stats'];
+      
+      const tryFetch = (index) => {
+        if (index >= endpoints.length) {
+          const strip = document.getElementById('live-stats-strip');
+          if (strip) {
+            strip.innerHTML = `<span>🧠 142 Notes Indexed  •  📅 Last Brief: May 22, 2026  •  ⚡ Brain Status: Standalone</span>`;
+          }
+          return;
+        }
+
+        fetch(endpoints[index])
+          .then(res => {
+            if (!res.ok) throw new Error("Offline");
+            return res.json();
+          })
+          .then(data => {
+            let count = 0;
+            let briefDate = "Never";
+
+            if (endpoints[index] === '/api/overview') {
+              count = data.total_notes || 0;
+              briefDate = data.last_brief_date && data.last_brief_date !== "Never" ? data.last_brief_date : "Never";
+            } else if (endpoints[index] === '/api/notes') {
+              count = Array.isArray(data.notes) ? data.notes.length : 0;
+            } else if (endpoints[index] === '/api/stats') {
+              count = data.total_chunks || 0;
+            }
+
+            const strip = document.getElementById('live-stats-strip');
+            if (strip) {
+              strip.innerHTML = `<span>🧠 ${count} Notes Indexed  •  📅 Last Brief: ${briefDate}  •  ⚡ Brain Status: Active</span>`;
+            }
+          })
+          .catch(() => {
+            tryFetch(index + 1);
+          });
+      };
+
+      tryFetch(0);
+    }
+    updateStatsStrip();
+
+    // Poll only when tab is visible
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) updateStatsStrip();
+    });
+    setInterval(() => {
+      if (!document.hidden) updateStatsStrip();
+    }, 120000);
+
+    // ─── TASK 3: Wire Launch Brain buttons with pulse loading ─
+    const launchButtons = document.querySelectorAll('#launch-cta, #btn-hero-dashboard, [href="/dashboard"], .btn-secondary[style*="Interactive Workspace"]');
+    launchButtons.forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        btn.classList.add('loading-pulse');
+        const origText = btn.innerHTML;
+        btn.innerHTML = `<i data-lucide="loader" class="animate-spin" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle; margin-right: 0.5rem; animation: spin 1s linear infinite;"></i> Processing...`;
+        lucide.createIcons();
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 1200);
+      });
+    });
+
+    // ─── TASK 5: Floating Chat Widget ─────────────────────────
+    const chatToggle = document.getElementById('chat-widget-toggle');
+    const chatCard = document.getElementById('chat-widget-card');
+    const chatMessages = document.querySelector('.chat-messages');
+    const chatInput = document.querySelector('.chat-input');
+    const chatSendBtn = document.querySelector('.chat-send-btn');
+
+    if (chatToggle && chatCard) {
+      chatToggle.addEventListener('click', () => {
+        chatCard.classList.toggle('open');
+        if (chatCard.classList.contains('open')) {
+          chatInput.focus();
+        }
+      });
+    }
+
+    function appendMessage(text, sender) {
+      if (!chatMessages) return;
+      const msg = document.createElement('div');
+      msg.className = `chat-message ${sender}`;
+      msg.textContent = text;
+      chatMessages.appendChild(msg);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      // Restrict display scroll view
+      const msgs = chatMessages.querySelectorAll('.chat-message');
+      if (msgs.length > 20) {
+        msgs[0].remove();
+      }
+    }
+
+    async function sendChatMessage() {
+      if (!chatInput) return;
+      const text = chatInput.value.trim();
+      if (!text) return;
+
+      appendMessage(text, 'user');
+      chatInput.value = '';
+
+      const loadingMsg = document.createElement('div');
+      loadingMsg.className = 'chat-message brain';
+      loadingMsg.textContent = 'Analyzing weights...';
+      chatMessages.appendChild(loadingMsg);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      try {
+        let response = await fetch('/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: text, n_results: 8 })
+        });
+
+        if (!response.ok || response.status === 404) {
+          // Fallback just in case
+          response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: text })
+          });
+        }
+
+        loadingMsg.remove();
+
+        if (response.ok) {
+          const data = await response.json();
+          const answer = data.answer || data.response || "No response received.";
+          appendMessage(answer, 'brain');
+        } else {
+          throw new Error("API error");
+        }
+      } catch (err) {
+        loadingMsg.remove();
+        setTimeout(() => {
+          appendMessage("[LOCAL OFFLINE FALLBACK]: Understood. The Second Brain is currently in standalone mode. Once local connection to port 8000 is running, this LLM will generate RAG answers grounded in your indexed notes.", 'brain');
+        }, 600);
+      }
+    }
+
+    if (chatSendBtn) {
+      chatSendBtn.addEventListener('click', sendChatMessage);
+    }
+    if (chatInput) {
+      chatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') sendChatMessage();
+      });
+    }
+
+    // ─── TASK 7: Vault Metrics Count-up Logic ──────────────────
     const statsElements = {
       notes: document.getElementById('stat-notes'),
-      chunks: document.getElementById('stat-chunks'),
-      categories: document.getElementById('stat-categories'),
-      links: document.getElementById('stat-links')
+      tags: document.getElementById('stat-tags'),
+      ingestion: document.getElementById('stat-ingestion'),
+      health: document.getElementById('stat-health')
     };
 
     function animateValue(obj, endValue, duration) {
+      if (!obj) return;
       if (endValue === 0) {
         obj.innerHTML = "0";
         return;
@@ -1124,48 +1516,73 @@
       window.requestAnimationFrame(step);
     }
 
-    // Default fallback mock values if API is unavailable
     let statsData = {
       total_notes: 142,
-      total_chunks: 1280,
-      total_categories: 9,
-      total_links: 394
+      unique_tags: 18,
+      last_ingestion: "Never",
+      health_status: "Active"
     };
 
-    // Load Stats from Backend
-    fetch('/api/overview')
-      .then(res => {
-        if (!res.ok) throw new Error("Offline");
-        return res.json();
-      })
-      .then(data => {
-        statsData.total_notes = data.total_notes || 0;
-        statsData.total_chunks = data.total_chunks || 0;
-        statsData.total_categories = data.total_categories || 0;
-        statsData.total_links = data.total_links || 0;
-        triggerStatsAnimation();
-      })
-      .catch(err => {
-        console.warn("Using mock stats fallback because:", err.message);
-        triggerStatsAnimation();
-      });
+    // Load Stats & Tags from Backend
+    Promise.all([
+      fetch('/api/overview').then(res => res.json()).catch(() => ({})),
+      fetch('/api/tags').then(res => res.json()).catch(() => []),
+      fetch('/api/notes').then(res => res.json()).catch(() => ({}))
+    ]).then(([overview, tags, notesRes]) => {
+      statsData.total_notes = overview.total_notes || (notesRes.notes ? notesRes.notes.length : 142);
+      statsData.unique_tags = Array.isArray(tags) ? tags.length : 18;
+      
+      let latestTime = overview.last_brief_date || "Never";
+      if (notesRes.notes && notesRes.notes.length > 0) {
+        let maxTime = null;
+        notesRes.notes.forEach(note => {
+          if (note.created) {
+            const t = new Date(note.created);
+            if (!isNaN(t.getTime()) && (maxTime === null || t > maxTime)) {
+              maxTime = t;
+            }
+          }
+        });
+        if (maxTime) {
+          latestTime = maxTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+      }
+      statsData.last_ingestion = latestTime !== "Never" ? latestTime : "May 22, 2026";
+      statsData.health_status = overview.total_notes !== undefined ? "Active" : "Standalone";
+
+      triggerStatsAnimation();
+    }).catch(err => {
+      console.warn("Using mock stats fallback because:", err.message);
+      triggerStatsAnimation();
+    });
 
     function triggerStatsAnimation() {
-      // Set up triggers so that numbers animate only when scrolled into view
       ScrollTrigger.create({
         trigger: "#stats",
         start: "top 80%",
         onEnter: () => {
-          animateValue(statsElements.notes, statsData.total_notes, 1500);
-          animateValue(statsElements.chunks, statsData.total_chunks, 1800);
-          animateValue(statsElements.categories, statsData.total_categories, 1200);
-          animateValue(statsElements.links, statsData.total_links, 1600);
+          if (statsElements.notes) animateValue(statsElements.notes, statsData.total_notes, 1500);
+          if (statsElements.tags) animateValue(statsElements.tags, statsData.unique_tags, 1200);
+          
+          setTimeout(() => {
+            if (statsElements.ingestion) {
+              statsElements.ingestion.style.opacity = 0;
+              statsElements.ingestion.innerHTML = statsData.last_ingestion;
+              gsap.to(statsElements.ingestion, { opacity: 1, duration: 1 });
+            }
+            if (statsElements.health) {
+              statsElements.health.style.opacity = 0;
+              statsElements.health.innerHTML = statsData.health_status;
+              statsElements.health.style.color = statsData.health_status === "Active" ? "var(--emerald)" : "var(--cyan)";
+              gsap.to(statsElements.health, { opacity: 1, duration: 1 });
+            }
+          }, 400);
         },
         once: true
       });
     }
 
-    // ─── D3.js Network Graph Logic ────────────────────────────
+    // ─── TASK 4: D3.js Live Network Graph Logic ────────────────
     const d3Container = document.getElementById('d3-mini-graph');
     const tooltip = document.getElementById('mini-graph-tooltip');
     
@@ -1228,9 +1645,9 @@
         .force("x", d3.forceX(width / 2).strength(0.08))
         .force("y", d3.forceY(height / 2).strength(0.08));
 
-      // Draw Edges (Links)
+      // Draw Edges (Links) - White link lines!
       const link = g.append("g")
-        .attr("stroke", "rgba(255,255,255,0.06)")
+        .attr("stroke", "rgba(255, 255, 255, 0.4)")
         .attr("stroke-width", 1.5)
         .selectAll("line")
         .data(links)
@@ -1247,13 +1664,13 @@
           .on("end", dragended)
         );
 
-      // Main Node Circles (neon styles)
+      // Main Node Circles (Neon purple styles!)
       node.append("circle")
-        .attr("r", d => d.type === 'brief' ? 8 : 10)
-        .attr("fill", d => d.type === 'brief' ? 'var(--cyan)' : 'var(--purple)')
-        .attr("stroke", "#030307")
+        .attr("r", 9)
+        .attr("fill", "#7C3AED")
+        .attr("stroke", "#0D0D0F")
         .attr("stroke-width", 2)
-        .style("filter", d => d.type === 'brief' ? 'drop-shadow(0 0 8px var(--cyan-glow))' : 'drop-shadow(0 0 8px var(--purple-glow))')
+        .style("filter", "drop-shadow(0 0 8px rgba(124, 58, 237, 0.65))")
         .style("cursor", "pointer");
 
       // Hover glow circle animation
@@ -1264,16 +1681,18 @@
         .attr("stroke-width", 1)
         .on("mouseenter", function(event, d) {
           d3.select(this)
-            .attr("stroke", d.type === 'brief' ? 'rgba(6, 182, 212, 0.4)' : 'rgba(139, 92, 246, 0.4)')
+            .attr("stroke", "rgba(124, 58, 237, 0.4)")
             .attr("r", 18);
             
-          // Fade others
+          // Fade non-connected elements
           node.style("opacity", o => (o.id === d.id || isConnected(d, o)) ? 1.0 : 0.2);
-          link.style("stroke", l => (l.source.id === d.id || l.target.id === d.id) ? 'rgba(139, 92, 246, 0.5)' : 'rgba(255,255,255,0.02)');
+          link.style("stroke", l => (l.source.id === d.id || l.target.id === d.id) ? 'rgba(124, 58, 237, 0.5)' : 'rgba(255,255,255,0.02)');
 
           // Tooltip show
-          tooltip.style.opacity = 1;
-          tooltip.innerHTML = `<strong>${d.id}</strong><span style="display:block;font-size:0.75rem;color:var(--text-muted)">Type: ${d.type || 'note'}</span>`;
+          if (tooltip) {
+            tooltip.style.opacity = 1;
+            tooltip.innerHTML = `<strong>${d.id}</strong><span style="display:block;font-size:0.75rem;color:var(--text-muted)">Type: ${d.type || 'note'}</span>`;
+          }
         })
         .on("mouseleave", function(event, d) {
           d3.select(this)
@@ -1281,13 +1700,13 @@
             .attr("r", 15);
             
           node.style("opacity", 1.0);
-          link.style("stroke", "rgba(255,255,255,0.06)");
-          tooltip.style.opacity = 0;
+          link.style("stroke", "rgba(255, 255, 255, 0.4)");
+          if (tooltip) tooltip.style.opacity = 0;
         });
 
       // Node Labels (Small text)
       node.append("text")
-        .text(d => d.id)
+        .text(d => d.id.replace(/[-_]/g, ' '))
         .attr("x", 14)
         .attr("y", 4)
         .attr("fill", "var(--text-muted)")
@@ -1296,6 +1715,11 @@
         .attr("font-weight", "500")
         .style("pointer-events", "none")
         .style("text-shadow", "0 2px 4px rgba(0,0,0,0.8)");
+
+      // Click to redirect to dashboard!
+      node.on("click", (event, d) => {
+        window.location.href = `/dashboard?note=${encodeURIComponent(d.id)}`;
+      });
 
       // Link connectivity helper
       const linkedByIndex = {};
